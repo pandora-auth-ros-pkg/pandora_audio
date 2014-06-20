@@ -1,0 +1,115 @@
+#!/usr/bin/env python
+# Software License Agreement (BSD License)
+#
+# Copyright (c) 2014, P.A.N.D.O.R.A. Team.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#  * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided
+#    with the distribution.
+#  * Neither the name of P.A.N.D.O.R.A. Team nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# Author: Nikolaos Tsipas
+
+import rospy
+from pandora_audio_msgs.msg import AudioData
+from pandora_common_msgs.msg import GeneralAlertMsg
+import std_msgs.msg
+import math
+import numpy as np
+
+WINDOW_SIZE = 1024
+source_loc_buffer = []  # 16 windows (~2 second)
+noise_floor_buffer = []  # 64 windows (~8 seconds)
+
+
+def rms(window_data):
+    return math.sqrt((window_data ** 2).sum() / float(len(window_data)))
+
+
+def calculate_horizontal_angle(rms_c1, rms_c2, rms_c3, rms_c4):
+
+    if rms_c1 < np.median(noise_floor_buffer):
+        return 999
+
+    dif13 = rms_c1 - rms_c3
+    dif24 = rms_c2 - rms_c4
+
+    angle = 999
+
+    if dif13 > 0 and dif24 > 0:
+        angle = math.atan2(dif13, dif24) * 180 / math.pi
+    elif dif13 > 0 and dif24 < 0:
+        angle = 90 + math.atan2(-dif24, dif13) * 180 / math.pi
+    elif dif13 < 0 and dif24 < 0:
+        angle = 180 + math.atan2(-dif13, -dif24) * 180 / math.pi
+    elif dif13 < 0 and dif24 > 0:
+        angle = 270 + math.atan2(dif24, -dif13) * 180 / math.pi
+
+    return angle
+
+
+def analyse_buffered_data(bam):
+    similar = 0
+    for i in range(0, len(bam)-1):  # excluding the last element which is the most recent
+        if abs(bam[-1] - bam[i]) <= 30:
+            similar += 1
+
+    if len(bam) <= 1:
+        return [bam[-1], 1]
+
+    probability = similar / float(len(bam)-1)
+    return [bam[-1], probability]
+
+
+def callback(data):
+
+    rms_c1 = rms(np.array(data.channel1))
+    rms_c2 = rms(np.array(data.channel2))
+    rms_c3 = rms(np.array(data.channel3))
+    rms_c4 = rms(np.array(data.channel4))
+    noise_floor_buffer.append(rms_c1)
+    if len(noise_floor_buffer) > 64:
+        noise_floor_buffer.pop(0)
+
+    source_loc_buffer.append(calculate_horizontal_angle(rms_c1, rms_c2, rms_c3, rms_c4))
+    if len(source_loc_buffer) > 16:
+        source_loc_buffer.pop(0)
+    angle, probability = analyse_buffered_data(source_loc_buffer)
+
+    h = std_msgs.msg.Header()
+    h.stamp = rospy.Time.now()
+    pub.publish(h, angle, 0, probability)
+
+
+def listener():
+    rospy.init_node('kinect_sound_source_localisation', anonymous=True)
+    rospy.Subscriber("kinect_audio_capture_stream", AudioData, callback)
+    rospy.spin()
+
+
+if __name__ == '__main__':
+    pub = rospy.Publisher('pandora_fusion', GeneralAlertMsg, queue_size=10)
+    listener()

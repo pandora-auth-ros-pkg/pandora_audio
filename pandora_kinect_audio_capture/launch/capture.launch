@@ -1,0 +1,4 @@
+<launch>
+  <node name="capture" pkg="pandora_kinect_audio_capture" type="capture.py">
+  </node>
+</launch>

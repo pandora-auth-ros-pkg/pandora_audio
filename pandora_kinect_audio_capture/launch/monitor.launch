@@ -1,0 +1,3 @@
+<launch>
+  <node name="monitor" pkg="pandora_kinect_audio_capture" type="monitor.py" />
+</launch>

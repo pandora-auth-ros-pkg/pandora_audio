@@ -1,0 +1,3 @@
+<launch>
+  <node name="processing" pkg="pandora_kinect_audio_processing" type="processing.py" />
+</launch>
