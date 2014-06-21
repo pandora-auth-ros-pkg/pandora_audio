@@ -106,10 +106,10 @@ def callback(data):
 
 def listener():
     rospy.init_node('kinect_sound_source_localisation', anonymous=True)
-    rospy.Subscriber("kinect_audio_capture_stream", AudioData, callback)
+    rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, callback)
     rospy.spin()
 
 
 if __name__ == '__main__':
-    pub = rospy.Publisher('pandora_fusion', GeneralAlertMsg, queue_size=10)
+    pub = rospy.Publisher(rospy.get_param("published_topic_names/sound_source_localisation"), GeneralAlertMsg, queue_size=10)
     listener()

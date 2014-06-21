@@ -61,7 +61,7 @@ def callback(data):
 
 def listener():
     rospy.init_node('kinect_monitor', anonymous=True)
-    rospy.Subscriber("kinect_audio_capture_stream", AudioData, callback)
+    rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, callback)
     rospy.spin()
         
 if __name__ == '__main__':

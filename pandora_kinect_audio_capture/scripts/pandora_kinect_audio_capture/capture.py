@@ -88,7 +88,7 @@ def get_raw_data(inp):
 
 def talker():
 
-    pub = rospy.Publisher('kinect_audio_capture_stream', AudioData, queue_size=10)
+    pub = rospy.Publisher(rospy.get_param("published_topic_names/audio_stream"), AudioData, queue_size=10)
     rospy.init_node('kinect_capture', anonymous=True)
     inp = get_audio_input()
     while not rospy.is_shutdown():
