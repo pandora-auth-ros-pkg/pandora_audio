@@ -67,13 +67,13 @@ class KinectAudioProcessing():
         angle = 999
 
         if dif13 > 0 and dif24 > 0:
-            angle = math.atan2(dif13, dif24) * 180 / math.pi
+            angle = math.atan2(dif13, dif24)
         elif dif13 > 0 and dif24 < 0:
-            angle = 90 + math.atan2(-dif24, dif13) * 180 / math.pi
+            angle = math.pi/2 + math.atan2(-dif24, dif13)
         elif dif13 < 0 and dif24 < 0:
-            angle = 180 + math.atan2(-dif13, -dif24) * 180 / math.pi
+            angle = math.pi + math.atan2(-dif13, -dif24)
         elif dif13 < 0 and dif24 > 0:
-            angle = 270 + math.atan2(dif24, -dif13) * 180 / math.pi
+            angle = 1.5 * math.pi + math.atan2(dif24, -dif13)
 
         return angle
 
