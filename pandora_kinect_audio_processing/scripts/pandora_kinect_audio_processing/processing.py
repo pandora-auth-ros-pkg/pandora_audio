@@ -45,8 +45,11 @@ class KinectAudioProcessing():
 
     def __init__(self):
         self.window_size = rospy.get_param("window_size")
-        self.source_loc_buffer = []  # 16 windows (~2 second)
-        self.noise_floor_buffer = []  # 64 windows (~8 seconds)
+        self.noise_floor_buffer_length = rospy.get_param("noise_floor_buffer_length") # 64 windows (~8 seconds)
+        self.source_loc_buffer_length = rospy.get_param("source_loc_buffer_length") # 16 windows (~2 second)
+        self.similarity_distance = rospy.get_param("similarity_distance")  # similarity distance in radians (~30 degrees)
+        self.source_loc_buffer = []
+        self.noise_floor_buffer = []
 
         self.pub = rospy.Publisher(rospy.get_param("published_topic_names/sound_source_localisation"), GeneralAlertMsg,
                                    queue_size=10)
@@ -81,7 +84,7 @@ class KinectAudioProcessing():
     def analyse_buffered_data(self, bam):
         similar = 0
         for i in range(0, len(bam)-1):  # excluding the last element which is the most recent
-            if abs(bam[-1] - bam[i]) <= 30:
+            if abs(bam[-1] - bam[i]) <= self.similarity_distance:
                 similar += 1
 
         if len(bam) <= 1:
@@ -98,11 +101,11 @@ class KinectAudioProcessing():
         rms_c3 = self.rms(np.array(data.channel3))
         rms_c4 = self.rms(np.array(data.channel4))
         self.noise_floor_buffer.append(rms_c1)
-        if len(self.noise_floor_buffer) > 64:
+        if len(self.noise_floor_buffer) > self.noise_floor_buffer_length:
             self.noise_floor_buffer.pop(0)
 
         self.source_loc_buffer.append(self.calculate_horizontal_angle(rms_c1, rms_c2, rms_c3, rms_c4))
-        if len(self.source_loc_buffer) > 16:
+        if len(self.source_loc_buffer) > self.source_loc_buffer_length:
             self.source_loc_buffer.pop(0)
         angle, probability = self.analyse_buffered_data(self.source_loc_buffer)
 
