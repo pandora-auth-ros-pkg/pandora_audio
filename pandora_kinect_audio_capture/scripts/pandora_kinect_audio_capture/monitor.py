@@ -39,35 +39,41 @@ import alsaaudio
 import struct
 import numpy as np
 
-SAMPLE_RATE = 8000
-WINDOW_SIZE = 1024
-BIT_DEPTH = 16
-CHANNELS = 2
-BUFFER_SIZE = 512
-RECORD_BUFFERS = 2
 
-def callback(data):
-    global pcm
+class KinectAudioMonitor():
 
-    c = []
-    c1 = np.array(data.channel1)
-    c4 = np.array(data.channel4)
-    for k in range(0,len(c1)):
-        c.append(c1[k])
-        c.append(c4[k])
+    def __init__(self):
+        self.sample_rate = rospy.get_param("sample_rate")
+        self.window_size = rospy.get_param("window_size")
+        self.bit_depth = rospy.get_param("bit_depth")
+        self.monitor_channels = rospy.get_param("monitor_channels")
+        self.buffer_size = rospy.get_param("buffer_size")
+        self.record_buffers = rospy.get_param("record_buffers")
 
-    pcm.write(struct.pack("<" + str(CHANNELS * RECORD_BUFFERS * BUFFER_SIZE) + 'h', *c))
+        self.pcm = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK)
+        self.pcm.setchannels(self.monitor_channels)
+        if self.bit_depth == 16:
+            self.pcm.setformat(alsaaudio.PCM_FORMAT_S16_LE)
+        else:
+            raise Exception("Not supported bit depth")
+        self.pcm.setrate(self.sample_rate)
+        self.pcm.setperiodsize(self.buffer_size)
+
+        rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback)
+        rospy.spin()
+
+    def callback(self, data):
+        c = []
+        c1 = np.array(data.channel1)
+        c4 = np.array(data.channel4)
+        for k in range(0, len(c1)):
+            c.append(c1[k])
+            c.append(c4[k])
+        self.pcm.write(struct.pack("<" + str(self.monitor_channels * self.record_buffers * self.buffer_size) + 'h', *c))
 
 
-def listener():
-    rospy.init_node('kinect_monitor', anonymous=True)
-    rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, callback)
-    rospy.spin()
-        
 if __name__ == '__main__':
-    pcm = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK)
-    pcm.setchannels(CHANNELS)
-    pcm.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-    pcm.setrate(SAMPLE_RATE)
-    pcm.setperiodsize(BUFFER_SIZE)
-    listener()
+    rospy.init_node('kinect_monitor', anonymous=True)
+    try:
+        kinect_audio_monitor = KinectAudioMonitor()
+    except rospy.ROSInterruptException: pass

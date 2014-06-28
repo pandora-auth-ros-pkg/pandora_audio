@@ -33,7 +33,6 @@
 #
 # Author: Nikolaos Tsipas
 
-from subprocess import call
 import rospy
 import alsaaudio
 import time
@@ -41,61 +40,54 @@ import struct
 import numpy
 from pandora_audio_msgs.msg import AudioData
 
-SAMPLE_RATE = 8000
-WINDOW_SIZE = 1024
-BIT_DEPTH = 16
-CHANNELS = 4
-BUFFER_SIZE = 512
-RECORD_BUFFERS = 2
-RECORD_SAMPLES = RECORD_BUFFERS * BUFFER_SIZE
 
-def set_gain(gain_percentage):
-    call(["pactl", "set-source-volume",
-          "alsa_input.usb-Microsoft_Kinect_USB_Audio_A44884C06964113A-01-Audio.input-4-channels", str(gain_percentage)+"%"])
+class KinectAudioCapture():
 
-def get_audio_input():
-    card = 'sysdefault:CARD=Audio'
-    audio_input = alsaaudio.PCM(alsaaudio.PCM_CAPTURE, alsaaudio.PCM_NORMAL, card)
-    audio_input.setchannels(CHANNELS)
-    audio_input.setrate(SAMPLE_RATE)
-    if BIT_DEPTH == 16:
-        audio_input.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-    else:
-        raise Exception("Not supported bit depth")
-    audio_input.setperiodsize(BUFFER_SIZE)
-    return audio_input
+    def __init__(self):
+        self.sample_rate = rospy.get_param("sample_rate")
+        self.window_size = rospy.get_param("window_size")
+        self.bit_depth = rospy.get_param("bit_depth")
+        self.capture_channels = rospy.get_param("capture_channels")
+        self.buffer_size = rospy.get_param("buffer_size")
+        self.record_buffers = rospy.get_param("record_buffers")
 
+        pub = rospy.Publisher(rospy.get_param("published_topic_names/audio_stream"), AudioData, queue_size=10)
+        inp = self.get_audio_input()
+        while not rospy.is_shutdown():
+            wb = self.get_raw_data(inp)
+            pub.publish(wb[0], wb[1], wb[2], wb[3])
 
-def get_raw_data(inp):
-    raw_data = []
-    for k in range(0, RECORD_BUFFERS):
-        length, data = inp.read()
-        raw_data.append(data)
-        time.sleep(.001)
+    def get_audio_input(self):
+        card = 'sysdefault:CARD=Audio'
+        audio_input = alsaaudio.PCM(alsaaudio.PCM_CAPTURE, alsaaudio.PCM_NORMAL, card)
+        audio_input.setchannels(self.capture_channels )
+        audio_input.setrate(self.sample_rate )
+        if self.bit_depth == 16:
+            audio_input.setformat(alsaaudio.PCM_FORMAT_S16_LE)
+        else:
+            raise Exception("Not supported bit depth")
+        audio_input.setperiodsize(self.buffer_size)
+        return audio_input
 
-    window_buffers = [[], [], [], []]
-    for data in raw_data:
-        all_channels_buffer = struct.unpack("<" + str(CHANNELS * BUFFER_SIZE) + 'h', data)
+    def get_raw_data(self, inp):
+        raw_data = []
+        for k in range(0, self.record_buffers):
+            length, data = inp.read()
+            raw_data.append(data)
+            time.sleep(.001)
 
-        for i in range(0, CHANNELS):
-            window_buffers[i].append(all_channels_buffer[i::CHANNELS])
+        window_buffers = [[], [], [], []]
+        for data in raw_data:
+            all_channels_buffer = struct.unpack("<" + str(self.capture_channels * self.buffer_size) + 'h', data)
+            for i in range(0, self.capture_channels):
+                window_buffers[i].append(all_channels_buffer[i::self.capture_channels])
 
-    for i in range(0, CHANNELS):
-        window_buffers[i] = numpy.hstack(window_buffers[i])
-
-    return window_buffers
-
-
-def talker():
-
-    pub = rospy.Publisher(rospy.get_param("published_topic_names/audio_stream"), AudioData, queue_size=10)
-    rospy.init_node('kinect_capture', anonymous=True)
-    inp = get_audio_input()
-    while not rospy.is_shutdown():
-        wb = get_raw_data(inp)
-        pub.publish(wb[0], wb[1], wb[2], wb[3])
+        for i in range(0, self.capture_channels):
+            window_buffers[i] = numpy.hstack(window_buffers[i])
+        return window_buffers
 
 if __name__ == '__main__':
+    rospy.init_node('kinect_capture', anonymous=True)
     try:
-        talker()
+        kinect_audio_capture = KinectAudioCapture()
     except rospy.ROSInterruptException: pass

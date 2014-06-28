@@ -40,76 +40,80 @@ import std_msgs.msg
 import math
 import numpy as np
 
-WINDOW_SIZE = 1024
-source_loc_buffer = []  # 16 windows (~2 second)
-noise_floor_buffer = []  # 64 windows (~8 seconds)
+
+class KinectAudioProcessing():
+
+    def __init__(self):
+        self.window_size = rospy.get_param("window_size")
+        self.source_loc_buffer = []  # 16 windows (~2 second)
+        self.noise_floor_buffer = []  # 64 windows (~8 seconds)
+
+        self.pub = rospy.Publisher(rospy.get_param("published_topic_names/sound_source_localisation"), GeneralAlertMsg,
+                                   queue_size=10)
+        rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback)
+        rospy.spin()
+
+    def rms(self, window_data):
+        return math.sqrt((window_data ** 2).sum() / float(len(window_data)))
+
+    def calculate_horizontal_angle(self, rms_c1, rms_c2, rms_c3, rms_c4):
+
+        if rms_c1 < np.median(self.noise_floor_buffer):
+            return 999
+
+        dif13 = rms_c1 - rms_c3
+        dif24 = rms_c2 - rms_c4
+
+        angle = 999
+
+        if dif13 > 0 and dif24 > 0:
+            angle = math.atan2(dif13, dif24) * 180 / math.pi
+        elif dif13 > 0 and dif24 < 0:
+            angle = 90 + math.atan2(-dif24, dif13) * 180 / math.pi
+        elif dif13 < 0 and dif24 < 0:
+            angle = 180 + math.atan2(-dif13, -dif24) * 180 / math.pi
+        elif dif13 < 0 and dif24 > 0:
+            angle = 270 + math.atan2(dif24, -dif13) * 180 / math.pi
+
+        return angle
 
 
-def rms(window_data):
-    return math.sqrt((window_data ** 2).sum() / float(len(window_data)))
+    def analyse_buffered_data(self, bam):
+        similar = 0
+        for i in range(0, len(bam)-1):  # excluding the last element which is the most recent
+            if abs(bam[-1] - bam[i]) <= 30:
+                similar += 1
+
+        if len(bam) <= 1:
+            return [bam[-1], 1]
+
+        probability = similar / float(len(bam)-1)
+        return [bam[-1], probability]
 
 
-def calculate_horizontal_angle(rms_c1, rms_c2, rms_c3, rms_c4):
+    def callback(self, data):
 
-    if rms_c1 < np.median(noise_floor_buffer):
-        return 999
+        rms_c1 = self.rms(np.array(data.channel1))
+        rms_c2 = self.rms(np.array(data.channel2))
+        rms_c3 = self.rms(np.array(data.channel3))
+        rms_c4 = self.rms(np.array(data.channel4))
+        self.noise_floor_buffer.append(rms_c1)
+        if len(self.noise_floor_buffer) > 64:
+            self.noise_floor_buffer.pop(0)
 
-    dif13 = rms_c1 - rms_c3
-    dif24 = rms_c2 - rms_c4
+        self.source_loc_buffer.append(self.calculate_horizontal_angle(rms_c1, rms_c2, rms_c3, rms_c4))
+        if len(self.source_loc_buffer) > 16:
+            self.source_loc_buffer.pop(0)
+        angle, probability = self.analyse_buffered_data(self.source_loc_buffer)
 
-    angle = 999
-
-    if dif13 > 0 and dif24 > 0:
-        angle = math.atan2(dif13, dif24) * 180 / math.pi
-    elif dif13 > 0 and dif24 < 0:
-        angle = 90 + math.atan2(-dif24, dif13) * 180 / math.pi
-    elif dif13 < 0 and dif24 < 0:
-        angle = 180 + math.atan2(-dif13, -dif24) * 180 / math.pi
-    elif dif13 < 0 and dif24 > 0:
-        angle = 270 + math.atan2(dif24, -dif13) * 180 / math.pi
-
-    return angle
-
-
-def analyse_buffered_data(bam):
-    similar = 0
-    for i in range(0, len(bam)-1):  # excluding the last element which is the most recent
-        if abs(bam[-1] - bam[i]) <= 30:
-            similar += 1
-
-    if len(bam) <= 1:
-        return [bam[-1], 1]
-
-    probability = similar / float(len(bam)-1)
-    return [bam[-1], probability]
-
-
-def callback(data):
-
-    rms_c1 = rms(np.array(data.channel1))
-    rms_c2 = rms(np.array(data.channel2))
-    rms_c3 = rms(np.array(data.channel3))
-    rms_c4 = rms(np.array(data.channel4))
-    noise_floor_buffer.append(rms_c1)
-    if len(noise_floor_buffer) > 64:
-        noise_floor_buffer.pop(0)
-
-    source_loc_buffer.append(calculate_horizontal_angle(rms_c1, rms_c2, rms_c3, rms_c4))
-    if len(source_loc_buffer) > 16:
-        source_loc_buffer.pop(0)
-    angle, probability = analyse_buffered_data(source_loc_buffer)
-
-    h = std_msgs.msg.Header()
-    h.stamp = rospy.Time.now()
-    pub.publish(h, angle, 0, probability)
-
-
-def listener():
-    rospy.init_node('kinect_sound_source_localisation', anonymous=True)
-    rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, callback)
-    rospy.spin()
+        h = std_msgs.msg.Header()
+        h.stamp = rospy.Time.now()
+        self.pub.publish(h, angle, 0, probability)
 
 
 if __name__ == '__main__':
-    pub = rospy.Publisher(rospy.get_param("published_topic_names/sound_source_localisation"), GeneralAlertMsg, queue_size=10)
-    listener()
+    rospy.init_node('kinect_sound_source_localisation', anonymous=True)
+    try:
+        kinect_audio_processing = KinectAudioProcessing()
+    except rospy.ROSInterruptException: pass
+

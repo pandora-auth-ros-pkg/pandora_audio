@@ -35,50 +35,54 @@
 
 import rospy
 from pandora_audio_msgs.msg import AudioData
-import alsaaudio
 import struct
 import numpy as np
 import wave
 
-SAMPLE_RATE = 8000
-WINDOW_SIZE = 1024
-BIT_DEPTH = 16
-CHANNELS = 4
-BUFFER_SIZE = 512
-RECORD_BUFFERS = 2
+
+class KinectAudioRecord():
+
+    def __init__(self):
+        self.sample_rate = rospy.get_param("sample_rate")
+        self.window_size = rospy.get_param("window_size")
+        self.bit_depth = rospy.get_param("bit_depth")
+        self.capture_channels = rospy.get_param("capture_channels")
+        self.buffer_size = rospy.get_param("buffer_size")
+        self.record_buffers = rospy.get_param("record_buffers")
+
+        self.wav = self.get_wav_output(rospy.get_param("wav_file_location"))
+
+        rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback)
+        rospy.spin()
+
+    def get_wav_output(self, wav_file):
+        wave_output = wave.open(wav_file, 'w')
+        wave_output.setnchannels(self.capture_channels)
+        if self.bit_depth == 16:
+            wave_output.setsampwidth(2)
+        else:
+            raise Exception("Not supported bit depth")
+        wave_output.setframerate(self.sample_rate)
+        return wave_output
+
+    def callback(self, data):
+
+        c = []
+        c1 = np.array(data.channel1)
+        c2 = np.array(data.channel2)
+        c3 = np.array(data.channel3)
+        c4 = np.array(data.channel4)
+        for k in range(0, len(c1)):
+            c.append(c1[k])
+            c.append(c2[k])
+            c.append(c3[k])
+            c.append(c4[k])
+
+        self.wav.writeframes(struct.pack("<" + str(self.capture_channels * self.record_buffers * self.buffer_size) + 'h', *c))
 
 
-def get_wav_output(wav_file):
-    wave_output = wave.open(wav_file, 'w')
-    wave_output.setnchannels(CHANNELS)
-    if BIT_DEPTH == 16:
-        wave_output.setsampwidth(2)
-    else:
-        raise Exception("Not supported bit depth")
-    wave_output.setframerate(SAMPLE_RATE)
-    return wave_output
-
-def callback(data):
-
-    c = []
-    c1 = np.array(data.channel1)
-    c2 = np.array(data.channel2)
-    c3 = np.array(data.channel3)
-    c4 = np.array(data.channel4)
-    for k in range(0, len(c1)):
-        c.append(c1[k])
-        c.append(c2[k])
-        c.append(c3[k])
-        c.append(c4[k])
-
-    wav.writeframes(struct.pack("<" + str(CHANNELS * RECORD_BUFFERS * BUFFER_SIZE) + 'h', *c))
-
-
-def listener():
-    rospy.init_node('kinect_record', anonymous=True)
-    rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, callback)
-    rospy.spin()
-        
 if __name__ == '__main__':
-    wav = get_wav_output('/tmp/wave.wav')
-    listener()
+    rospy.init_node('kinect_record', anonymous=True)
+    try:
+        kinect_audio_record = KinectAudioRecord()
+    except rospy.ROSInterruptException: pass
