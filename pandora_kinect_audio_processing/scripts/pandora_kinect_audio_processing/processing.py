@@ -36,14 +36,19 @@
 import rospy
 from pandora_audio_msgs.msg import AudioData
 from pandora_common_msgs.msg import GeneralAlertMsg
+from state_manager_communications.msg import robotModeMsg
 import std_msgs.msg
 import math
 import numpy as np
+import state_manager
 
 
-class KinectAudioProcessing():
+class KinectAudioProcessing(state_manager.state_client.StateClient):
 
     def __init__(self):
+
+        state_manager.state_client.StateClient.__init__(self)
+
         self.window_size = rospy.get_param("window_size")
         self.noise_floor_buffer_length = rospy.get_param("noise_floor_buffer_length") # 64 windows (~8 seconds)
         self.source_loc_buffer_length = rospy.get_param("source_loc_buffer_length") # 16 windows (~2 second)
@@ -51,10 +56,28 @@ class KinectAudioProcessing():
         self.source_loc_buffer = []
         self.noise_floor_buffer = []
 
+        self.robot_state = robotModeMsg.MODE_OFF
+
         self.pub = rospy.Publisher(rospy.get_param("published_topic_names/sound_source_localisation"), GeneralAlertMsg,
                                    queue_size=10)
-        rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback)
-        rospy.spin()
+        self.sub = rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback,
+                                    queue_size=1)
+        self.sub.unregister()
+
+        self.client_initialize()
+
+    def start_transition(self, state):
+        rospy.loginfo("[%s] Starting Transition to state %i", self._name, state)
+        self.robot_state = state
+        self.transition_complete(state)
+
+    def complete_transition(self):
+        rospy.loginfo("[%s] System Transitioned, starting work", self._name)
+        if self.robot_state == robotModeMsg.MODE_DF_HOLD:
+            self.sub.__init__(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback,
+                              queue_size=1)
+        else:
+            self.sub.unregister()
 
     def rms(self, window_data):
         return math.sqrt((window_data ** 2).sum() / float(len(window_data)))
@@ -119,4 +142,5 @@ if __name__ == '__main__':
     try:
         kinect_audio_processing = KinectAudioProcessing()
     except rospy.ROSInterruptException: pass
+    rospy.spin()
 
