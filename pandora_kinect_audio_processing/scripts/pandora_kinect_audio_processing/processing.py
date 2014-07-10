@@ -73,7 +73,7 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 
     def complete_transition(self):
         rospy.loginfo("[%s] System Transitioned, starting work", self._name)
-        if self.robot_state == robotModeMsg.MODE_DF_HOLD:
+        if self.robot_state == robotModeMsg.MODE_SENSOR_HOLD or self.robot_state == robotModeMsg.MODE_SENSOR_TEST:
             self.sub.__init__(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback,
                               queue_size=1)
         else:
