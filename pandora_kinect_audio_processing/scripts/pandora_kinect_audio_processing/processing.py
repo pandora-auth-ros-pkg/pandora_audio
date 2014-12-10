@@ -36,7 +36,7 @@
 import rospy
 from pandora_audio_msgs.msg import AudioData
 from pandora_common_msgs.msg import GeneralAlertMsg
-from state_manager_communications.msg import robotModeMsg
+from state_manager_msgs.msg import RobotModeMsg
 import std_msgs.msg
 import math
 import numpy as np
@@ -56,7 +56,7 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
         self.source_loc_buffer = []
         self.noise_floor_buffer = []
 
-        self.robot_state = robotModeMsg.MODE_OFF
+        self.robot_state = RobotModeMsg.MODE_OFF
 
         self.pub = rospy.Publisher(rospy.get_param("published_topic_names/sound_source_localisation"), GeneralAlertMsg,
                                    queue_size=10)
@@ -73,7 +73,7 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 
     def complete_transition(self):
         rospy.loginfo("[%s] System Transitioned, starting work", self._name)
-        if self.robot_state == robotModeMsg.MODE_SENSOR_HOLD or self.robot_state == robotModeMsg.MODE_SENSOR_TEST:
+        if self.robot_state == RobotModeMsg.MODE_SENSOR_HOLD or self.robot_state == RobotModeMsg.MODE_SENSOR_TEST:
             self.sub.__init__(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback,
                               queue_size=1)
         else:

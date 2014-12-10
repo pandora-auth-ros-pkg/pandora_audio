@@ -6,7 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   pandora_audio_msgs
   pandora_common_msgs
   state_manager
-  state_manager_communications
+  state_manager_msgs
 )
 
 catkin_package(
@@ -16,7 +16,7 @@ catkin_package(
     pandora_audio_msgs
     pandora_common_msgs
     state_manager
-    state_manager_communications
+    state_manager_msgs
 )
 
 catkin_python_setup()
