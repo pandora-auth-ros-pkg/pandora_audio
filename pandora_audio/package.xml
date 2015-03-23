@@ -1,5 +1,4 @@
-<?xml version="1.0"?>
-<package>
+<package format="2">
 <name>pandora_audio</name>
   <version>0.0.0</version>
   <description>The pandora_audio metapackage</description>
@@ -13,9 +12,9 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <run_depend>pandora_audio_msgs</run_depend>
-  <run_depend>pandora_kinect_audio_capture</run_depend>
-  <run_depend>pandora_kinect_audio_processing</run_depend>
+  <exec_depend>pandora_audio_msgs</exec_depend>
+  <exec_depend>pandora_kinect_audio_capture</exec_depend>
+  <exec_depend>pandora_kinect_audio_processing</exec_depend>
 
   <export>
       <metapackage/>
