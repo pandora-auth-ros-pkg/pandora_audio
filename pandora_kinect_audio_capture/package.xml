@@ -1,5 +1,4 @@
-<?xml version="1.0"?>
-<package>
+<package format="2">
 <name>pandora_kinect_audio_capture</name>
   <version>0.0.0</version>
   <description>Capture code for microsoft Kinect</description>
@@ -15,16 +14,11 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>rospy</build_depend>
-  <run_depend>rospy</run_depend>
+  <depend>rospy</depend>
+  <depend>std_msgs</depend>
+  <depend>pandora_audio_msgs</depend>
 
-  <build_depend>std_msgs</build_depend>
-  <run_depend>std_msgs</run_depend>
-
-  <build_depend>pandora_audio_msgs</build_depend>
-  <run_depend>pandora_audio_msgs</run_depend>
-
-  <run_depend>python-numpy</run_depend>
+  <exec_depend>python-numpy</exec_depend>
 
 <!--
   External depend, until gets support by rosdep
