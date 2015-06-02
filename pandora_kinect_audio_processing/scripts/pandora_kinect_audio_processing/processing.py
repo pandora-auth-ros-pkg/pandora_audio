@@ -34,6 +34,7 @@
 # Author: Nikolaos Tsipas
 
 import rospy
+import time
 from pandora_audio_msgs.msg import AudioData
 from pandora_common_msgs.msg import GeneralAlertMsg
 from state_manager_msgs.msg import RobotModeMsg
@@ -44,11 +45,14 @@ import state_manager
 
 
 class KinectAudioProcessing(state_manager.state_client.StateClient):
-
+    	
     def __init__(self):
-
-        state_manager.state_client.StateClient.__init__(self)
-
+	print "mphka";
+        #state_manager.state_client.StateClient.__init__(self)
+	#state_manager.state_client.StateClient.client_initialize(self)
+	self.count=0
+	self.final_angle=0
+	self.angle_matrix=[]
         self.window_size = rospy.get_param("window_size")
         self.noise_floor_buffer_length = rospy.get_param("noise_floor_buffer_length") # 64 windows (~8 seconds)
         self.source_loc_buffer_length = rospy.get_param("source_loc_buffer_length") # 16 windows (~2 second)
@@ -62,7 +66,8 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
                                    queue_size=10)
         self.sub = rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback,
                                     queue_size=1)
-        self.sub.unregister()
+	print "ok ta phra";        
+	#self.sub.unregister()
 
         self.client_initialize()
 
@@ -84,14 +89,14 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 
     def calculate_horizontal_angle(self, rms_c1, rms_c2, rms_c3, rms_c4):
 
-        if rms_c1 < np.median(self.noise_floor_buffer):
-            return 999
+        #if rms_c1 < np.median(self.noise_floor_buffer):
+        #    return 999
 
         dif13 = rms_c1 - rms_c3
         dif24 = rms_c2 - rms_c4
 
-        angle = 999
-
+        #angle = 999
+        
         if dif13 > 0 and dif24 > 0:
             angle = math.atan2(dif13, dif24)
         elif dif13 > 0 and dif24 < 0:
@@ -100,7 +105,8 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
             angle = math.pi + math.atan2(-dif13, -dif24)
         elif dif13 < 0 and dif24 > 0:
             angle = 1.5 * math.pi + math.atan2(dif24, -dif13)
-
+	
+	angle=(angle*180)/math.pi
         return angle
 
 
@@ -116,28 +122,74 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
         probability = similar / float(len(bam)-1)
         return [bam[-1], probability]
 
+    def bubbleSort(self,alist):
+    	for passnum in range(len(alist)-1,0,-1):
+        	for i in range(passnum):
+            		if alist[i]>alist[i+1]:
+                		temp = alist[i]
+                		alist[i] = alist[i+1]
+                		alist[i+1] = temp
 
+	
     def callback(self, data):
-
-        rms_c1 = self.rms(np.array(data.channel1))
-        rms_c2 = self.rms(np.array(data.channel2))
+	rms_c4 = self.rms(np.array(data.channel1))
+        rms_c1 = self.rms(np.array(data.channel2))
         rms_c3 = self.rms(np.array(data.channel3))
-        rms_c4 = self.rms(np.array(data.channel4))
-        self.noise_floor_buffer.append(rms_c1)
-        if len(self.noise_floor_buffer) > self.noise_floor_buffer_length:
-            self.noise_floor_buffer.pop(0)
+        rms_c2 = self.rms(np.array(data.channel4))
+	print "The rms of mic1 is"
+        print rms_c4
+	print "The rms of mic2 is"
+        print rms_c1
+	print "The rms of mic3 is"
+        print rms_c3
+	print "The rms of mic4 is"
+        print rms_c2
 
+        #self.noise_floor_buffer.append(rms_c1)
+        #if len(self.noise_floor_buffer) > self.noise_floor_buffer_length:
+        #    self.noise_floor_buffer.pop(0)
+
+	####################Calibration########################
+	cal=3#choice of calibration
+	if cal==1:
+		a_1=1.017
+		a_2=1
+		a_3=1.1183
+		a_4=1.0489
+	elif cal==2:
+		a_1=1
+		a_2=1
+		a_3=1.1185
+		a_4=1.0297
+	elif cal==0:
+		a_1=1
+		a_2=1
+		a_3=1
+		a_4=1
+		
+	else:
+		a_1=1
+		a_2=1.0162
+		a_3=1.0547
+		a_4=1.0689
+
+	rms_c4 = a_1*rms_c4
+        rms_c1 = a_2*rms_c1
+        rms_c3 = a_3*rms_c3
+        rms_c2 = a_4*rms_c2
+	####################End_of_Calibration########################
         self.source_loc_buffer.append(self.calculate_horizontal_angle(rms_c1, rms_c2, rms_c3, rms_c4))
-        if len(self.source_loc_buffer) > self.source_loc_buffer_length:
-            self.source_loc_buffer.pop(0)
+        #if len(self.source_loc_buffer) > self.source_loc_buffer_length:
+        #   self.source_loc_buffer.pop(0)
         angle, probability = self.analyse_buffered_data(self.source_loc_buffer)
-
         h = std_msgs.msg.Header()
         h.stamp = rospy.Time.now()
+	print angle
         self.pub.publish(h, angle, 0, probability)
 
 
 if __name__ == '__main__':
+    print "keskina";
     rospy.init_node('kinect_sound_source_localisation', anonymous=True)
     try:
         kinect_audio_processing = KinectAudioProcessing()
