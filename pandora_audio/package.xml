@@ -15,6 +15,7 @@
   <exec_depend>pandora_audio_msgs</exec_depend>
   <exec_depend>pandora_kinect_audio_capture</exec_depend>
   <exec_depend>pandora_kinect_audio_processing</exec_depend>
+  <exec_depend>pandora_voice_recognition</exec_depend>
 
   <export>
       <metapackage/>

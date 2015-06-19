@@ -39,43 +39,26 @@
  #include "pandora_voice_recognition/alert_generator.h"
 
 
-class Recognition
-{
-  ros::Subscriber sub_recognizer_;
-  ros::Subscriber sub_localization_;
-  ros::Publisher pub_;
-  ros::NodeHandle *n_;
-  std::vector<std::string> *wordsVector;
-  bool foundWord_;
-  bool existsAlert_;
-  float yaw_;
-  float probability_;
-public:
-  Recognition();
-  void sendAlert();
-  void callbackRecognizer(const std_msgs::String::ConstPtr& msg);
-  void callbackLocalization(const pandora_common_msgs::GeneralAlert::ConstPtr& msg);
-  int addWordsInVector();
-};
 
-Recognition::Recognition()
+
+Recognition::Recognition(
+    ros::NodeHandle nodeHandle):n_(nodeHandle)
 {
-  
-  n_ = new ros::NodeHandle;
   foundWord_ = false;
   existsAlert_ = false;
-  sub_recognizer_ = n_->subscribe("/recognizer/output", 50, &Recognition::callbackRecognizer,this);
-  sub_localization_ = n_->subscribe("/sound/alert", 50, &Recognition::callbackLocalization,this);
+  sub_recognizer_ = n_.subscribe("/recognizer/output", 50, &Recognition::callbackRecognizer,this);
+  sub_localization_ = n_.subscribe("/sound/alert", 50, &Recognition::callbackLocalization,this);
   
-  pub_ = n_->advertise<pandora_common_msgs::GeneralAlert>("/sound/complete_alert", 50);
+  pub_ = n_.advertise<pandora_common_msgs::GeneralAlertVector>("/sound/complete_alert", 50);
 }
 
 
 void Recognition::sendAlert()
 {
-  pandora_common_msgs::GeneralAlert msg;
-  msg.info.yaw = yaw_;
-  msg.info.probability = probability_;
+  pandora_common_msgs::GeneralAlertVector msg;
+  msg.alerts[0].yaw = yaw_;
+  msg.alerts[0].pitch = 0;
+  msg.alerts[0].probability = probability_;
   pub_.publish(msg);
 }
 
@@ -99,19 +82,33 @@ void Recognition::callbackRecognizer(const std_msgs::String::ConstPtr& msg)
   
 }
 
-void Recognition::callbackLocalization(const pandora_common_msgs::GeneralAlert::ConstPtr& msg)
+void Recognition::callbackLocalization(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg)
 {
 	ROS_INFO("ALERT found!");
 	existsAlert_ = true;
-	yaw_ = msg->info.yaw;
-	probability_ = msg->info.probability;
+	yaw_ = msg->alerts[0].yaw;
+	probability_ = msg->alerts[0].probability;
 
 	
 }
 
 int Recognition::addWordsInVector()
 {
-  static const std::string arr[] = {"help","one","two","three","four","five","six","seven","eight","nine","ten"};
+  XmlRpc::XmlRpcValue robocupWordsList;
+  n_.getParam("words", robocupWordsList);
+  ROS_ASSERT(
+      robocupWordsList.getType() == XmlRpc::XmlRpcValue::TypeArray);
+
+  std::string *arr;
+  arr = new std::string[robocupWordsList.size()];
+
+  for (int i=0;i<robocupWordsList.size();i++)
+  {
+    arr[i] = static_cast<std::string>(robocupWordsList[i]);
+  }
+
+
+  //static const std::string arr[] = {"help","one","two","three","four","five","six","seven","eight","nine","ten"};
   wordsVector = new std::vector<std::string>(arr, arr + sizeof(arr) / sizeof(arr[0]));
 }
 
@@ -122,7 +119,9 @@ int main(int argc, char **argv)
 
 
   ros::init(argc, argv, "alert_generator");
-  Recognition recognizer;
+  ros::NodeHandle nodeHandle;
+
+  Recognition recognizer(nodeHandle);
 
   recognizer.addWordsInVector();
 

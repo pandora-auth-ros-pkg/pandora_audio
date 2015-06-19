@@ -1,0 +1,17 @@
+<launch>
+  
+  <!-- Launch alert_generator node-->
+  <include
+    file="$(find pandora_voice_recognition)/launch/alert_generator.launch" />
+
+  <!-- Launch audio_localization node -->
+  <include
+    file="$(find pandora_kinect_audio_capture)/launch/capture.launch" />
+
+  <include
+    file="$(find pandora_kinect_audio_processing)/launch/process.launch" />
+
+  <include
+    file="$(find pandora_kinect_audio_capture)/launch/capture.launch" />
+
+</launch>

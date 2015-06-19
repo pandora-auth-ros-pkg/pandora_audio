@@ -35,7 +35,8 @@
 
 import rospy
 from pandora_audio_msgs.msg import AudioData
-from pandora_common_msgs.msg import GeneralAlertMsg
+from pandora_common_msgs.msg import GeneralAlertVector
+from pandora_common_msgs.msg import GeneralAlertInfo
 from state_manager_msgs.msg import RobotModeMsg
 import std_msgs.msg
 import math
@@ -47,6 +48,7 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 
     def __init__(self):
 
+        
         state_manager.state_client.StateClient.__init__(self)
 
         self.window_size = rospy.get_param("window_size")
@@ -58,8 +60,9 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 
         self.robot_state = RobotModeMsg.MODE_OFF
 
-        self.pub = rospy.Publisher(rospy.get_param("published_topic_names/sound_source_localisation"), GeneralAlertMsg,
+        self.pub = rospy.Publisher(rospy.get_param("published_topic_names/sound_source_localisation"), GeneralAlertVector,
                                    queue_size=10)
+
         self.sub = rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback,
                                     queue_size=1)
         self.sub.unregister()
@@ -132,9 +135,12 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
             self.source_loc_buffer.pop(0)
         angle, probability = self.analyse_buffered_data(self.source_loc_buffer)
 
-        h = std_msgs.msg.Header()
-        h.stamp = rospy.Time.now()
-        self.pub.publish(h, angle, 0, probability)
+        a = GeneralAlertVector()
+        a.header = std_msgs.msg.Header()
+        a.header.stamp = rospy.Time.now()
+        a.alerts.append(GeneralAlertInfo(angle,0,probability))
+        
+        self.pub.publish(a)
 
 
 if __name__ == '__main__':

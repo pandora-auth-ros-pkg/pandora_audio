@@ -39,11 +39,27 @@
 #include "ros/ros.h"
 #include "std_msgs/Int16.h"
 #include "std_msgs/String.h"
-#include "pandora_common_msgs/GeneralAlert.h"
+#include "pandora_common_msgs/GeneralAlertVector.h"
 #include <vector>
 #include <string>
-#include <fstream>
 
-const int MAX_CHARS_PER_LINE = 100;
-const int MAX_TOKENS_PER_LINE = 1;
-const char* const DELIMITER = " ";
+
+class Recognition
+{
+  ros::Subscriber sub_recognizer_;
+  ros::Subscriber sub_localization_;
+  ros::Publisher pub_;
+  ros::NodeHandle n_;
+  std::vector<std::string> *wordsVector;
+  bool foundWord_;
+  bool existsAlert_;
+  float yaw_;
+  float probability_;
+public:
+  Recognition();
+  explicit Recognition(ros::NodeHandle nodeHandle);
+  void sendAlert();
+  void callbackRecognizer(const std_msgs::String::ConstPtr& msg);
+  void callbackLocalization(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg);
+  int addWordsInVector();
+};
