@@ -56,22 +56,27 @@ Recognition::Recognition(
 void Recognition::sendAlert()
 {
   pandora_common_msgs::GeneralAlertVector msg;
-  msg.alerts[0].yaw = yaw_;
-  msg.alerts[0].pitch = 0;
-  msg.alerts[0].probability = probability_;
+  pandora_common_msgs::GeneralAlertInfo info;
+
+  info.yaw = yaw_;
+  info.pitch = 0;
+  info.probability = probability_;
+
+  msg.alerts.push_back(info);
   pub_.publish(msg);
 }
 
 void Recognition::callbackRecognizer(const std_msgs::String::ConstPtr& msg)
 {
-  for(int i=0;i<wordsVector->size();i++)
+  for(int i=0;i<arraySize_;i++)
   {
-  	if (msg->data == (*wordsVector)[i])
+  	if (msg->data == wordsArray[i])
   	{
   		ROS_INFO("FOUND robocup word!");
   		foundWord_ = true;
   		if (existsAlert_)
   		{
+      			ROS_INFO("Exists alert!");
   			sendAlert();
   			existsAlert_=false;
   			foundWord_=false;
@@ -99,17 +104,21 @@ int Recognition::addWordsInVector()
   ROS_ASSERT(
       robocupWordsList.getType() == XmlRpc::XmlRpcValue::TypeArray);
 
-  std::string *arr;
-  arr = new std::string[robocupWordsList.size()];
+
+  wordsArray = new std::string[robocupWordsList.size()];	
+  ROS_ERROR("%d",robocupWordsList.size());
 
   for (int i=0;i<robocupWordsList.size();i++)
   {
-    arr[i] = static_cast<std::string>(robocupWordsList[i]);
+   wordsArray[i] = static_cast<std::string>(robocupWordsList[i]);
   }
+
+  arraySize_ = robocupWordsList.size();
+  
 
 
   //static const std::string arr[] = {"help","one","two","three","four","five","six","seven","eight","nine","ten"};
-  wordsVector = new std::vector<std::string>(arr, arr + sizeof(arr) / sizeof(arr[0]));
+  //wordsVector = new std::vector<std::string>(arr, robocupWordsList.size());
 }
 
 

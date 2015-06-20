@@ -3,6 +3,7 @@
   <node name="recognizer" pkg="pandora_voice_recognition" type="recognizer.py" output="screen">
     <param name="lm" value="$(find pandora_voice_recognition)/demo/robocup.lm"/>
     <param name="dict" value="$(find pandora_voice_recognition)/demo/robocup.dic"/>
+    <param name="mic" value="alsa_input.usb-Microsoft_Kinect_USB_Audio_A44885B12471039A-01-Audio.input-4-channels" />
   </node>
 
 </launch>

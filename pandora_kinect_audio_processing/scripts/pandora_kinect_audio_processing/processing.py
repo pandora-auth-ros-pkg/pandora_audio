@@ -49,7 +49,7 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
     def __init__(self):
 
         
-        state_manager.state_client.StateClient.__init__(self)
+        #state_manager.state_client.StateClient.__init__(self)
 
         self.window_size = rospy.get_param("window_size")
         self.noise_floor_buffer_length = rospy.get_param("noise_floor_buffer_length") # 64 windows (~8 seconds)
@@ -65,9 +65,9 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 
         self.sub = rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback,
                                     queue_size=1)
-        self.sub.unregister()
+        #self.sub.unregister()
 
-        self.client_initialize()
+        #self.client_initialize()
 
     def start_transition(self, state):
         rospy.loginfo("[%s] Starting Transition to state %i", self._name, state)
@@ -75,8 +75,11 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
         self.transition_complete(state)
 
     def complete_transition(self):
+       
         rospy.loginfo("[%s] System Transitioned, starting work", self._name)
+        rospy.loginfo("Ela mbitch1"+RobotModeMsg.MODE_SENSOR_HOLD+"  klain "+self.robot_state)
         if self.robot_state == RobotModeMsg.MODE_SENSOR_HOLD or self.robot_state == RobotModeMsg.MODE_SENSOR_TEST:
+	    rospy.loginfo("Ela mbitch2")
             self.sub.__init__(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback,
                               queue_size=1)
         else:

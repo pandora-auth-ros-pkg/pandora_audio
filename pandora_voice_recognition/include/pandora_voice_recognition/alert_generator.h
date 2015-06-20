@@ -40,6 +40,7 @@
 #include "std_msgs/Int16.h"
 #include "std_msgs/String.h"
 #include "pandora_common_msgs/GeneralAlertVector.h"
+#include "pandora_common_msgs/GeneralAlertInfo.h"
 #include <vector>
 #include <string>
 
@@ -50,7 +51,9 @@ class Recognition
   ros::Subscriber sub_localization_;
   ros::Publisher pub_;
   ros::NodeHandle n_;
-  std::vector<std::string> *wordsVector;
+  //std::vector<std::string> *wordsVector;
+  std::string* wordsArray;
+  int arraySize_;
   bool foundWord_;
   bool existsAlert_;
   float yaw_;
