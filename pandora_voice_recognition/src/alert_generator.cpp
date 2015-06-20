@@ -89,10 +89,13 @@ void Recognition::callbackRecognizer(const std_msgs::String::ConstPtr& msg)
 
 void Recognition::callbackLocalization(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg)
 {
-	ROS_INFO("ALERT found!");
-	existsAlert_ = true;
-	yaw_ = msg->alerts[0].yaw;
-	probability_ = msg->alerts[0].probability;
+	if (msg->alerts[0].yaw != 999)
+	{
+	  ROS_INFO("ALERT found!");
+	  existsAlert_ = true;
+	  yaw_ = msg->alerts[0].yaw;
+	  probability_ = msg->alerts[0].probability;
+	}
 
 	
 }
