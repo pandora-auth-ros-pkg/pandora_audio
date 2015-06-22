@@ -54,7 +54,7 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
         self.window_size = rospy.get_param("window_size")
         self.noise_floor_buffer_length = rospy.get_param("noise_floor_buffer_length") # 64 windows (~8 seconds)
         self.source_loc_buffer_length = rospy.get_param("source_loc_buffer_length") # 16 windows (~2 second)
-        self.similarity_distance = rospy.get_param("similarity_distance")  # similarity distance in radians (~30 degrees)
+        self.similarity_distance = rospy.get_param("similarity_distance")  # similarity distance in degrees (~30 degrees)
         self.source_loc_buffer = []
         self.noise_floor_buffer = []
 
@@ -90,7 +90,7 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 
     def calculate_horizontal_angle(self, rms_c1, rms_c2, rms_c3, rms_c4):
 
-        if rms_c1 < np.median(self.noise_floor_buffer):
+        if rms_c1 < (np.median(self.noise_floor_buffer)+2*np.std(self.noise_floor_buffer)):  #changed from np.median to np.mean
             return 999
 
         dif13 = rms_c1 - rms_c3
@@ -107,6 +107,7 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
         elif dif13 < 0 and dif24 > 0:
             angle = 1.5 * math.pi + math.atan2(dif24, -dif13)
 
+        angle=(angle*180)/math.pi
         return angle
 
 
@@ -125,10 +126,14 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 
     def callback(self, data):
 
-        rms_c1 = self.rms(np.array(data.channel1))
-        rms_c2 = self.rms(np.array(data.channel2))
-        rms_c3 = self.rms(np.array(data.channel3))
+        #rms_c1 = self.rms(np.array(data.channel1))
+        #rms_c2 = self.rms(np.array(data.channel2))
+        rms_c2 = self.rms(np.array(data.channel1))
+        rms_c3 = self.rms(np.array(data.channel2))
+        rms_c1 = self.rms(np.array(data.channel3))
         rms_c4 = self.rms(np.array(data.channel4))
+        #rms_c4 = self.rms(np.array(data.channel4))
+
         self.noise_floor_buffer.append(rms_c1)
         if len(self.noise_floor_buffer) > self.noise_floor_buffer_length:
             self.noise_floor_buffer.pop(0)
@@ -142,7 +147,8 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
         a.header = std_msgs.msg.Header()
         a.header.stamp = rospy.Time.now()
         a.alerts.append(GeneralAlertInfo(angle,0,probability))
-        
+        if angle < 800:
+            rospy.loginfo("Angle: [%f] Probability: [%f]",angle,probability)
         self.pub.publish(a)
 
 

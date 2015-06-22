@@ -91,7 +91,7 @@ void Recognition::callbackLocalization(const pandora_common_msgs::GeneralAlertVe
 {
 	if (msg->alerts[0].yaw != 999)
 	{
-	  ROS_INFO("ALERT found!");
+	  //ROS_INFO("ALERT found!");
 	  existsAlert_ = true;
 	  yaw_ = msg->alerts[0].yaw;
 	  probability_ = msg->alerts[0].probability;
