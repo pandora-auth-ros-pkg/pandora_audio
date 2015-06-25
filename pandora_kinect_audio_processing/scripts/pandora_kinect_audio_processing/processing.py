@@ -58,7 +58,7 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
         self.noise_floor_sensitivity = rospy.get_param("noise_floor_sensitivity") #noise floor threshold. Range 0-3. 3 is very strict.
         self.source_loc_buffer = []
         self.noise_floor_buffer = []
-
+	self.threshold = 70
         self.robot_state = RobotModeMsg.MODE_OFF
 
         self.pub = rospy.Publisher(rospy.get_param("published_topic_names/sound_source_localisation"), GeneralAlertVector,
@@ -91,9 +91,20 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 
     def calculate_horizontal_angle(self, rms_c1, rms_c2, rms_c3, rms_c4):
         # mean of rms plus noise_floor_sensitivity multiplied by the standard deviation
-        if rms_c1 < (np.mean(self.noise_floor_buffer)+self.noise_floor_sensitivity*np.std(self.noise_floor_buffer)):  #changed from np.median to np.mean
-            return 999
+        # if rms_c1 < (np.mean(self.noise_floor_buffer)+self.noise_floor_sensitivity*np.std(self.noise_floor_buffer)):  #changed from np.median to np.mean
+        #    return 999
+	
+	if not (abs(rms_c1-rms_c2)>self.threshold or abs(rms_c1-rms_c3)>self.threshold or abs(rms_c1-rms_c4)>self.threshold or abs(rms_c2-rms_c3)>self.threshold or abs(rms_c3-rms_c4)>self.threshold):
+        	return 999 
 
+	#print(abs(rms_c1-rms_c2))
+	#print(abs(rms_c1-rms_c3))
+	#print(abs(rms_c1-rms_c4))
+	#print(abs(rms_c2-rms_c3))
+	#print(abs(rms_c2-rms_c4))
+	#print(abs(rms_c3-rms_c4))
+
+	
         dif13 = rms_c1 - rms_c3
         dif24 = rms_c2 - rms_c4
 
@@ -129,10 +140,10 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 
         #rms_c1 = self.rms(np.array(data.channel1))
         #rms_c2 = self.rms(np.array(data.channel2))
-        rms_c2 = self.rms(np.array(data.channel1))
-        rms_c3 = self.rms(np.array(data.channel2))
-        rms_c1 = self.rms(np.array(data.channel3))
-        rms_c4 = self.rms(np.array(data.channel4))
+        rms_c4 = self.rms(np.array(data.channel1))
+        rms_c1 = self.rms(np.array(data.channel2))
+        rms_c3 = self.rms(np.array(data.channel3))
+        rms_c2 = self.rms(np.array(data.channel4))
         #rms_c4 = self.rms(np.array(data.channel4))
 
         #self.noise_floor_buffer.append(rms_c1)
