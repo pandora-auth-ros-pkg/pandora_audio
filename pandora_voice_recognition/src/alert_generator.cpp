@@ -68,21 +68,16 @@ void Recognition::sendAlert()
 
 void Recognition::callbackRecognizer(const std_msgs::String::ConstPtr& msg)
 {
-  for(int i=0;i<arraySize_;i++)
-  {
-  	if (msg->data == wordsArray[i])
-  	{
-  		ROS_INFO("FOUND robocup word!");
+
+  		ROS_INFO("FOUND robocup word: %s",msg->data.c_str());
   		foundWord_ = true;
   		if (existsAlert_)
   		{
-      			ROS_INFO("Exists alert!");
+      	ROS_INFO("Exists alert!");
   			sendAlert();
   			existsAlert_=false;
   			foundWord_=false;
   		}
-  	}
-  }
   
   
 }
@@ -117,11 +112,6 @@ int Recognition::addWordsInVector()
   }
 
   arraySize_ = robocupWordsList.size();
-  
-
-
-  //static const std::string arr[] = {"help","one","two","three","four","five","six","seven","eight","nine","ten"};
-  //wordsVector = new std::vector<std::string>(arr, robocupWordsList.size());
 }
 
 
@@ -135,7 +125,7 @@ int main(int argc, char **argv)
 
   Recognition recognizer(nodeHandle);
 
-  recognizer.addWordsInVector();
+  //recognizer.addWordsInVector();
 
   ros::spin();
 

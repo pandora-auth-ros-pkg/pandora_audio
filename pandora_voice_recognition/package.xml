@@ -12,9 +12,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <exec_depend>rospy</exec_depend>
-  <exec_depend>std_srvs</exec_depend>
-  <exec_depend>gstreamer0.10-pocketsphinx</exec_depend>
-  <exec_depend>python-gst</exec_depend>
+  <exec_depend>pocketsphinx</exec_depend>
   
   <depend>std_msgs</depend>
   <depend>roscpp</depend>
