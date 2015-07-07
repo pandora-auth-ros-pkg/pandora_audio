@@ -33,12 +33,14 @@
 #
 # Author: Taras Nikos
 
+import std_msgs.msg
 import rospy
 import alsaaudio
 import time
 import struct
 import numpy
 from pandora_audio_msgs.msg import AudioData
+
 
 
 class KinectAudioCapture():
@@ -55,7 +57,9 @@ class KinectAudioCapture():
         inp = self.get_audio_input()
         while not rospy.is_shutdown():
             wb = self.get_raw_data(inp)
-            pub.publish(wb[2], wb[3], wb[1], wb[0])
+	    header = std_msgs.msg.Header()
+            header.stamp = rospy.Time.now()
+            pub.publish(header,wb[2], wb[3], wb[1], wb[0])
 
     def get_audio_input(self):
         #card = 'sysdefault:CARD=Audio'

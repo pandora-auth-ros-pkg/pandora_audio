@@ -18,6 +18,7 @@
   <exec_depend>message_runtime</exec_depend>
 
   <depend>std_msgs</depend>
+  <depend>pandora_common_msgs</depend>
 
   <export>
   </export>
