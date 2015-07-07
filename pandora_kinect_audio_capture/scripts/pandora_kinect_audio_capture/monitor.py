@@ -65,10 +65,12 @@ class KinectAudioMonitor():
     def callback(self, data):
         c = []
         c1 = np.array(data.channel1)
+	c2 = np.array(data.channel2)
+	c3 = np.array(data.channel3)
         c4 = np.array(data.channel4)
         for k in range(0, len(c1)):
-            c.append(c1[k])
-            c.append(c4[k])
+            temp = (c1[k]+c2[k]+c3[k]+c4[k])/4
+            c.append(temp)
         self.pcm.write(struct.pack("<" + str(self.monitor_channels * self.record_buffers * self.buffer_size) + 'h', *c))
 
 

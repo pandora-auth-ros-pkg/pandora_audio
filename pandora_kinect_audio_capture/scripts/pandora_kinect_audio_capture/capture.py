@@ -55,7 +55,7 @@ class KinectAudioCapture():
         inp = self.get_audio_input()
         while not rospy.is_shutdown():
             wb = self.get_raw_data(inp)
-            pub.publish(wb[0], wb[1], wb[2], wb[3])
+            pub.publish(wb[2], wb[3], wb[1], wb[0])
 
     def get_audio_input(self):
         #card = 'sysdefault:CARD=Audio'

@@ -138,14 +138,20 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 
     def callback(self, data):
 
-        #rms_c1 = self.rms(np.array(data.channel1))
-        #rms_c2 = self.rms(np.array(data.channel2))
-        rms_c4 = self.rms(np.array(data.channel1))
-        rms_c1 = self.rms(np.array(data.channel2))
+	rms_c1 = self.rms(np.array(data.channel1))
+        rms_c2 = self.rms(np.array(data.channel2))
         rms_c3 = self.rms(np.array(data.channel3))
-        rms_c2 = self.rms(np.array(data.channel4))
-        #rms_c4 = self.rms(np.array(data.channel4))
+        rms_c4 = self.rms(np.array(data.channel4)) 
 
+	a_1=1
+	a_2=1.0162
+	a_3=1.0547
+	a_4=1.0689
+
+	rms_c1 = a_1*rms_c1
+        rms_c2 = a_2*rms_c2
+        rms_c3 = a_3*rms_c3
+        rms_c4 = a_4*rms_c4
         #self.noise_floor_buffer.append(rms_c1)
         self.noise_floor_buffer.append((rms_c1+rms_c2+rms_c3+rms_c4)/4)
         if len(self.noise_floor_buffer) > self.noise_floor_buffer_length:
