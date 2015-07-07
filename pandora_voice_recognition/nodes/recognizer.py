@@ -68,10 +68,11 @@ class recognizer(object):
 			temp = self.gain*c2[k]
 			c.append(temp)
 
-		buf = struct.pack("<" + str(1024) + 'h', *c)
+		#buf = struct.pack("<" + str(1024) + 'h', *c)
 
-		self.pcm.write(buf)
 
+		#self.pcm.write(buf)
+		length, buf = self.inp.read()
 		self.decoder.process_raw(buf, False, False)
 		if self.decoder.hyp() != None:
 			msg = String()
