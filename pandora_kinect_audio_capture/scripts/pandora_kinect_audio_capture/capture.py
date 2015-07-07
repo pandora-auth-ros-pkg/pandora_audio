@@ -51,7 +51,7 @@ class KinectAudioCapture():
         self.buffer_size = rospy.get_param("buffer_size")
         self.record_buffers = rospy.get_param("record_buffers")
 
-        pub = rospy.Publisher(rospy.get_param("published_topic_names/audio_stream"), AudioData, queue_size=10)
+        pub = rospy.Publisher(rospy.get_param("published_topic_names/audio_stream"), AudioData, queue_size=1)
         inp = self.get_audio_input()
         while not rospy.is_shutdown():
             wb = self.get_raw_data(inp)
