@@ -9,10 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   pandora_common_msgs
 )
 
-
-
-
-catkin_package(DEPENDS
+catkin_package(CATKIN_DEPENDS
   roscpp
   roslint
   std_msgs
@@ -21,8 +18,8 @@ catkin_package(DEPENDS
 
 catkin_python_setup()
 
-install(DIRECTORY demo
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+#install(DIRECTORY demo
+#    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 install(PROGRAMS nodes/recognizer.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
@@ -31,6 +28,7 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(alert_generator src/alert_generator.cpp)
 target_link_libraries(alert_generator ${catkin_LIBRARIES})
+add_dependencies(alert_generator ${catkin_EXPORTED_TARGETS}) 
 
 
 
