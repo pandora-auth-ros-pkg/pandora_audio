@@ -2,7 +2,7 @@
 
   <!--Launch recognizer node-->
   <include
-    file="$(find pandora_voice_recognition)/demo/robocup.launch" />
+    file="$(find pandora_voice_recognition)/launch/recognizer.launch" />
   
   <!-- Launch alert_generator node--> 
   <include
@@ -10,9 +10,6 @@
 
   <!-- Launch audio_localization node -->
   <include
-    file="$(find pandora_kinect_audio_capture)/launch/capture.launch" />
-
-  <include
-    file="$(find pandora_kinect_audio_processing)/launch/process.launch" />
+    file="$(find pandora_voice_recognition)/launch/localization.launch" />
 
 </launch>

@@ -95,6 +95,7 @@ void Recognition::callbackLocalization(const pandora_common_msgs::GeneralAlertVe
 	
 }
 
+/*
 int Recognition::addWordsInVector()
 {
   XmlRpc::XmlRpcValue robocupWordsList;
@@ -114,7 +115,7 @@ int Recognition::addWordsInVector()
   arraySize_ = robocupWordsList.size();
 }
 
-
+*/
 
 int main(int argc, char **argv)
 {
@@ -124,8 +125,6 @@ int main(int argc, char **argv)
   ros::NodeHandle nodeHandle;
 
   Recognition recognizer(nodeHandle);
-
-  //recognizer.addWordsInVector();
 
   ros::spin();
 

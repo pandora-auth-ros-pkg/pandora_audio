@@ -1,7 +1,0 @@
-<launch>
-
-  <node name="recognizer" pkg="pandora_voice_recognition" type="recognizer.py" output="screen">
-    <param name="~keyphrase_dir" value="$(find pandora_voice_recognition)/demo/keyphrase.list"/>
-  </node>
-
-</launch>

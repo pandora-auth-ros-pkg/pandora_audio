@@ -51,7 +51,6 @@ class Recognition
   ros::Subscriber sub_localization_;
   ros::Publisher pub_;
   ros::NodeHandle n_;
-  //std::vector<std::string> *wordsVector;
   std::string* wordsArray;
   int arraySize_;
   bool foundWord_;
@@ -64,5 +63,4 @@ public:
   void sendAlert();
   void callbackRecognizer(const std_msgs::String::ConstPtr& msg);
   void callbackLocalization(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg);
-  int addWordsInVector();
 };

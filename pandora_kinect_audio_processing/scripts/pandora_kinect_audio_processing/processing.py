@@ -31,7 +31,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# Author: Nikolaos Tsipas
+# Author: Mylwnakis Lefteris
 
 import rospy
 from pandora_audio_msgs.msg import AudioData

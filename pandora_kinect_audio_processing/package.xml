@@ -3,14 +3,14 @@
   <version>0.0.0</version>
   <description>Processing code for microsoft Kinect</description>
 
-  <maintainer email="nicktgr15@gmail.com">Nikolaos Tsipas</maintainer>
+  <maintainer email="driverbulba@gmail.com">Taras Nikos</maintainer>
 
   <license>BSD</license>
 
   <url type="bugtracker">https://github.com/pandora-auth-ros-pkg/pandora_audio/issues</url>
   <url type="repository">https://github.com/pandora-auth-ros-pkg/pandora_audio</url>
 
-  <author>Nikolaos Tsipas</author>
+  <author>Taras Nikos</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 

@@ -1,0 +1,8 @@
+<launch>
+  <!-- Launch audio_localization node -->
+  <include
+    file="$(find pandora_kinect_audio_capture)/launch/capture.launch" />
+
+  <include
+    file="$(find pandora_kinect_audio_processing)/launch/process.launch" />
+</launch>

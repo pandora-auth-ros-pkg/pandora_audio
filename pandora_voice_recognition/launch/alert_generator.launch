@@ -1,11 +1,5 @@
 <launch>
-  <!-- load configuration -->
-  <rosparam
-    command="load"
-    file="$(find pandora_voice_recognition)/config/robocup_words.yaml"
-    ns = "pandora_audio"/>
-    
-  <!-- Launch controller manager with pandora hardware interface-->
+  <!-- Launch alert_generator node-->
   <node
     name="alert_generator"
     pkg="pandora_voice_recognition"
