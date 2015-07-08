@@ -6,9 +6,10 @@ import alsaaudio
 import numpy as np
 import roslib; roslib.load_manifest('pandora_voice_recognition')
 import rospy
-from std_msgs.msg import String
 import commands
+import std_msgs.msg
 from pandora_audio_msgs.msg import AudioData
+from pandora_audio_msgs.msg import Recognition
 import struct
 
 class recognizer(object):
@@ -21,7 +22,7 @@ class recognizer(object):
 		#YAMLs
 		self.keyphrase_dir = rospy.get_param("~keyphrase_dir")  #full path and filename
 
-		self.pub = rospy.Publisher('/recognizer/output',String)
+		self.pub = rospy.Publisher('/recognizer/output',Recognition)
 		rospy.Subscriber('/pandora_audio/kinect_audio_capture_stream', AudioData, self.callback, queue_size=1)
 
 		self.recognizer_channels = 1
@@ -74,8 +75,9 @@ class recognizer(object):
 
 		self.decoder.process_raw(buf, False, False)
 		if self.decoder.hyp() != None:
-			msg = String()
-			msg.data = self.decoder.hyp().hypstr+" "+str(self.decoder.hyp().prob)
+			msg = Recognition()
+			msg.header.stamp = data.header.stamp
+			msg.word.data = self.decoder.hyp().hypstr+" "+str(self.decoder.hyp().prob)
 			self.pub.publish(msg)
 			#rospy.loginfo("Detected victim word: ", self.decoder.hyp().hypstr)
 

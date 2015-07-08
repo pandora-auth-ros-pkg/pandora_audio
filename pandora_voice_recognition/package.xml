@@ -17,6 +17,7 @@
   <depend>std_msgs</depend>
   <depend>roscpp</depend>
   <depend>pandora_common_msgs</depend>
+  <depend>message_filters</depend>
 
   <depend>roslint</depend>
 

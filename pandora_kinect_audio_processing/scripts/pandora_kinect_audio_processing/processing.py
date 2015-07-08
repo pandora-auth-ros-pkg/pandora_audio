@@ -58,7 +58,7 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
         self.noise_floor_sensitivity = rospy.get_param("noise_floor_sensitivity") #noise floor threshold. Range 0-3. 3 is very strict.
         self.source_loc_buffer = []
         self.noise_floor_buffer = []
-	self.threshold = 70
+        self.threshold = 70
         self.robot_state = RobotModeMsg.MODE_OFF
 
         self.pub = rospy.Publisher(rospy.get_param("published_topic_names/sound_source_localisation"), GeneralAlertVector,
@@ -164,7 +164,7 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 
         a = GeneralAlertVector()
         a.header = std_msgs.msg.Header()
-        a.header.stamp = rospy.Time.now()
+        a.header.stamp = data.header.stamp  # localization alert should have the same timestamp
         a.alerts.append(GeneralAlertInfo(angle,0,probability))
         if angle < 800:
             rospy.loginfo("Angle: [%f] Probability: [%f]",angle,probability)

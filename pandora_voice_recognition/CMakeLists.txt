@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   rospy
   pandora_common_msgs
+  message_filters
 )
 
 catkin_package(CATKIN_DEPENDS
@@ -14,6 +15,7 @@ catkin_package(CATKIN_DEPENDS
   roslint
   std_msgs
   pandora_common_msgs
+  message_filters
 )
 
 catkin_python_setup()

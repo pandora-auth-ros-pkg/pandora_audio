@@ -41,26 +41,14 @@
 #include "std_msgs/String.h"
 #include "pandora_common_msgs/GeneralAlertVector.h"
 #include "pandora_common_msgs/GeneralAlertInfo.h"
-#include <vector>
+#include "pandora_audio_msgs/SoundAlert.h"
+#include "pandora_audio_msgs/SoundAlertVector.h"
+#include "pandora_audio_msgs/Recognition.h"
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
 #include <string>
+#include <sstream>
+
+using namespace message_filters;
 
 
-class Recognition
-{
-  ros::Subscriber sub_recognizer_;
-  ros::Subscriber sub_localization_;
-  ros::Publisher pub_;
-  ros::NodeHandle n_;
-  std::string* wordsArray;
-  int arraySize_;
-  bool foundWord_;
-  bool existsAlert_;
-  float yaw_;
-  float probability_;
-public:
-  Recognition();
-  explicit Recognition(ros::NodeHandle nodeHandle);
-  void sendAlert();
-  void callbackRecognizer(const std_msgs::String::ConstPtr& msg);
-  void callbackLocalization(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg);
-};

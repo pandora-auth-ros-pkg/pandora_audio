@@ -12,6 +12,7 @@ add_message_files(
   AudioData.msg
   SoundAlert.msg
   SoundAlertVector.msg
+  Recognition.msg
   )
 
 generate_messages(
