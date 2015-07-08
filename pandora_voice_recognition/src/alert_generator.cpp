@@ -38,7 +38,7 @@
 
  #include "pandora_voice_recognition/alert_generator.h"
 
-class SoundSync : public StateClient
+class SoundSync : public state_manager::StateClient
 {
   ros::Subscriber sub_recognizer_;
   ros::Subscriber sub_localizer_;
