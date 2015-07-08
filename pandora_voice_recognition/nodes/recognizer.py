@@ -81,7 +81,7 @@ class recognizer(object):
 		if self.decoder.hyp() != None:
 			msg = Recognition()
 			msg.header.stamp = data.header.stamp
-			msg.word.data = self.decoder.hyp().hypstr+" "+str(self.decoder.hyp().prob)
+			msg.word = self.decoder.hyp().hypstr+" "+str(self.decoder.hyp().prob)
 			self.pub.publish(msg)
 			#rospy.loginfo("Detected victim word: ", self.decoder.hyp().hypstr)
 

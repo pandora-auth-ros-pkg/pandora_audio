@@ -1,2 +1,2 @@
 pandora_common_msgs/GeneralAlertInfo info
-std_msgs/String word
+string word

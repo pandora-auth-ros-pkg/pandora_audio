@@ -99,7 +99,7 @@ void SoundSync::syncCallback(const pandora_audio_msgs::RecognitionConstPtr& reco
   {
     float yaw, probability;
     std::string recognized_word;
-    recognized_word = reco->word.data;
+    recognized_word = reco->word;
     yaw = loc->alerts[0].yaw;
     probability = loc->alerts[0].probability;
     sendAlert(yaw,probability,recognized_word);
@@ -122,7 +122,7 @@ void SoundSync::sendAlert(float yaw, float probability, std::string recognized_w
   alert.info.pitch = 0;
   alert.info.probability = probability;
 
-  alert.word.data = recognized_word;
+  alert.word = recognized_word;
 
   msg.alerts.push_back(alert);
   pub_.publish(msg);
