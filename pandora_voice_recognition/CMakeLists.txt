@@ -8,6 +8,9 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   pandora_common_msgs
   message_filters
+  state_manager
+  state_manager_msgs
+  pandora_audio_msgs
 )
 
 catkin_package(CATKIN_DEPENDS
@@ -16,6 +19,9 @@ catkin_package(CATKIN_DEPENDS
   std_msgs
   pandora_common_msgs
   message_filters
+  state_manager
+  state_manager_msgs
+  pandora_audio_msgs
 )
 
 catkin_python_setup()

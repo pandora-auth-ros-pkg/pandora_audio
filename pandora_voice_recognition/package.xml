@@ -18,6 +18,9 @@
   <depend>roscpp</depend>
   <depend>pandora_common_msgs</depend>
   <depend>message_filters</depend>
+  <depend>state_manager</depend>
+  <depend>state_manager_msgs</depend>
+  <depend>pandora_audio_msgs</depend>
 
   <depend>roslint</depend>
 

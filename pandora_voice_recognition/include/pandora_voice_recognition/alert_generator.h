@@ -36,9 +36,15 @@
  *   Taras Nikos <driverbulba@gmail.com>
  *********************************************************************/
 
+#ifndef PANDORA_AUDIO_ALERT_GENERATOR_H
+#define PANDORA_AUDIO_ALERT_GENERATOR_H
+
+
 #include "ros/ros.h"
 #include "std_msgs/Int16.h"
 #include "std_msgs/String.h"
+#include "state_manager/state_client.h"
+#include "state_manager_msgs/RobotModeMsg.h"
 #include "pandora_common_msgs/GeneralAlertVector.h"
 #include "pandora_common_msgs/GeneralAlertInfo.h"
 #include "pandora_audio_msgs/SoundAlert.h"
@@ -50,5 +56,7 @@
 #include <sstream>
 
 using namespace message_filters;
+typedef state_manager_msgs::RobotModeMsg state;
+#endif  // PANDORA_AUDIO_ALERT_GENERATOR_H
 
 

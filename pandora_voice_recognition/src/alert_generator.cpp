@@ -38,7 +38,7 @@
 
  #include "pandora_voice_recognition/alert_generator.h"
 
-class SoundSync
+class SoundSync : public StateClient
 {
   ros::Subscriber sub_recognizer_;
   ros::Subscriber sub_localizer_;
@@ -48,26 +48,42 @@ class SoundSync
   ros::Subscriber sub_localizer_standalone_;
   ros::Publisher pub_;
   ros::NodeHandle n_;
-  bool state_exploration_;
   float yaw_;
   float probability_;
   std::string recognized_word_;
+  bool completedTransition_;
+  int currentState_;
+protected:
+  void startTransition(int newState);
+  void completeTransition();
 public:
   SoundSync();
   explicit SoundSync(ros::NodeHandle nodeHandle);
   void sendAlert(float yaw, float probability, std::string recognized_word);
-  void callbackRecognizer(const pandora_audio_msgs::Recognition::ConstPtr& msg);
-  void callbackLocalizer(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg);
   void callbackStandalone(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg);
   void syncCallback(const pandora_audio_msgs::RecognitionConstPtr& reco, const pandora_common_msgs::GeneralAlertVectorConstPtr& loc);
 };
 
+void SoundSync::startTransition(int newState)
+{
+  if (newState == state::MODE_EXPLORATION_RESCUE)
+  {
+    ROS_INFO("EXPLORATION STATE");
+  }
+  completedTransition_ = false;
+  currentState_ = newState;
+}
+
+void SoundSync::completeTransition()
+{
+  completedTransition_ = true;
+}
+
 SoundSync::SoundSync(
     ros::NodeHandle nodeHandle):n_(nodeHandle)
 {
-  state_exploration_ = false;
-  sub_recognizer_ = n_.subscribe("/recognizer/output", 50, &SoundSync::callbackRecognizer,this);
-  sub_localizer_ = n_.subscribe("/sound/localization", 50, &SoundSync::callbackLocalizer,this);
+  completedTransition_ = false;
+  currentState_ = 0;
   reco_sub_ = new message_filters::Subscriber<pandora_audio_msgs::Recognition>(n_,"/recognizer/output",1);
   loc_sub_ = new message_filters::Subscriber<pandora_common_msgs::GeneralAlertVector>(n_,"/sound/localization",1);
   sync_ = new TimeSynchronizer<pandora_audio_msgs::Recognition, pandora_common_msgs::GeneralAlertVector>(*reco_sub_,*loc_sub_,10);
@@ -79,12 +95,17 @@ SoundSync::SoundSync(
 
 void SoundSync::syncCallback(const pandora_audio_msgs::RecognitionConstPtr& reco, const pandora_common_msgs::GeneralAlertVectorConstPtr& loc)
 {
-  float yaw, probability;
-  std::string recognized_word;
-  recognized_word = reco->word.data;
-  yaw = loc->alerts[0].yaw;
-  probability = loc->alerts[0].probability;
-  sendAlert(yaw,probability,recognized_word);
+  if ((currentState_== state::MODE_EXPLORATION_RESCUE || currentState_ == state::MODE_SENSOR_TEST) && completedTransition_)
+  {
+    float yaw, probability;
+    std::string recognized_word;
+    recognized_word = reco->word.data;
+    yaw = loc->alerts[0].yaw;
+    probability = loc->alerts[0].probability;
+    sendAlert(yaw,probability,recognized_word);
+  }
+  else 
+    ROS_WARN("ALERT FOUND BUT NOT IN EXPLORATION");
 }
 
 
@@ -112,24 +133,13 @@ void SoundSync::sendAlert(float yaw, float probability, std::string recognized_w
 void SoundSync::callbackStandalone(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg)
 {
   float yaw,probability;
-	if (state_exploration_)
+	if ((currentState_== state::MODE_SENSOR_HOLD || currentState_ == state::MODE_SENSOR_TEST) && completedTransition_)
   {
 	  yaw = msg->alerts[0].yaw;
 	  probability = msg->alerts[0].probability;
     sendAlert(yaw,probability,"0");  //Send alert with empty string inside.
   }
 }
-
-void SoundSync::callbackLocalizer(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg)
-{
-
-}
-
-void SoundSync::callbackRecognizer(const pandora_audio_msgs::Recognition::ConstPtr& msg)
-{
-  
-}
-
 
 
 int main(int argc, char **argv)
