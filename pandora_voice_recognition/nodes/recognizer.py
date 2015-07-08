@@ -12,10 +12,13 @@ from pandora_audio_msgs.msg import AudioData
 from pandora_audio_msgs.msg import Recognition
 import struct
 
+
 class recognizer(object):
 	def __init__(self):
 		# Start node
 		rospy.init_node("recognizer")
+
+
 		
 		self.modeldir = "/usr/share/pocketsphinx/model"
 		
@@ -45,6 +48,7 @@ class recognizer(object):
 		self.config.set_string('-hmm', os.path.join(self.modeldir, 'hmm/wsj1'))
 		self.config.set_string('-dict', os.path.join(self.modeldir, 'lm/wsj/wlist5o.dic'))
 		self.config.set_string('-kws', self.keyphrase_dir)
+		self.config.set_string('-logfn', '/dev/null') 
 
 
 		self.inp.setchannels(1)
@@ -87,6 +91,6 @@ class recognizer(object):
 
 if __name__ == "__main__":
 	try:
-	  start = recognizer()
+		start = recognizer()
 	except rospy.ROSInterruptException:
 		pass
