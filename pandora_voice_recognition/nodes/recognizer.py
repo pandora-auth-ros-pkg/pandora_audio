@@ -50,7 +50,7 @@ class recognizer(object):
 		self.config.set_string('-dict', os.path.join(self.modeldir, 'lm/wsj/wlist5o.dic'))
 		self.config.set_string('-kws', self.keyphrase_dir)
 		self.config.set_string('-logfn', '/dev/null') 
-		self.config.set_string('-samprate', '8000.0')
+		#self.config.set_string('-samprate', '8000.0')
 
 
 		#self.inp.setchannels(1)
@@ -74,8 +74,9 @@ class recognizer(object):
 			#temp = self.gain*(c1[k]+c2[k]+c3[k]+c4[k])/4
 			temp = self.gain*c2[k]
 			c.append(temp)
+			c.append(temp)
 
-		buf = struct.pack("<" + str(2048) + 'h', *c)
+		buf = struct.pack("<" + str(4096) + 'h', *c)
 
 		#self.pcm.write(buf)
 
