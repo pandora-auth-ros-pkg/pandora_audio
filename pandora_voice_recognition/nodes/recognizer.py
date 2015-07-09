@@ -31,18 +31,19 @@ class recognizer(object):
 		self.recognizer_channels = 1
 
 		#prosoxh! Afta einai gia monitor
-		self.pcm = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK)
-		self.pcm.setchannels(1)
-		self.pcm.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-		self.pcm.setrate(16000)
-		self.pcm.setperiodsize(1024)
+		#self.pcm = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK)
+		#self.pcm.setchannels(1)
+		#self.pcm.setformat(alsaaudio.PCM_FORMAT_S16_LE)
+		#self.pcm.setrate(16000)
+		#self.pcm.setperiodsize(1024)
 		#########
 
 		##configure
 		self.gain = 1
 		###
 
-		self.inp = alsaaudio.PCM(alsaaudio.PCM_CAPTURE, alsaaudio.PCM_NORMAL, 'default')
+		#self.inp = alsaaudio.PCM(alsaaudio.PCM_CAPTURE, alsaaudio.PCM_NORMAL, 'default')
+		
 		self.config = Decoder.default_config()
 
 		self.config.set_string('-hmm', os.path.join(self.modeldir, 'hmm/wsj1'))
@@ -51,10 +52,10 @@ class recognizer(object):
 		self.config.set_string('-logfn', '/dev/null') 
 
 
-		self.inp.setchannels(1)
-		self.inp.setrate(16000)
-		self.inp.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-		self.inp.setperiodsize(1024)
+		#self.inp.setchannels(1)
+		#self.inp.setrate(16000)
+		#self.inp.setformat(alsaaudio.PCM_FORMAT_S16_LE)
+		#self.inp.setperiodsize(1024)
 
 		self.decoder = Decoder(self.config)
 		self.decoder.start_utt()
@@ -73,9 +74,9 @@ class recognizer(object):
 			temp = self.gain*c2[k]
 			c.append(temp)
 
-		buf = struct.pack("<" + str(1024) + 'h', *c)
+		buf = struct.pack("<" + str(2048) + 'h', *c)
 
-		self.pcm.write(buf)
+		#self.pcm.write(buf)
 
 		self.decoder.process_raw(buf, False, False)
 		if self.decoder.hyp() != None:
