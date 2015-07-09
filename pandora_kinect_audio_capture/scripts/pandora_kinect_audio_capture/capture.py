@@ -62,8 +62,8 @@ class KinectAudioCapture():
             pub.publish(header,wb[2], wb[3], wb[1], wb[0])
 
     def get_audio_input(self):
-        #card = 'sysdefault:CARD=Audio'
-        card = 'default'  #uses pulseaudio server
+        card = 'sysdefault:CARD=Audio'
+        # card = 'default'  #uses pulseaudio server
         audio_input = alsaaudio.PCM(alsaaudio.PCM_CAPTURE, alsaaudio.PCM_NORMAL, card)
         audio_input.setchannels(self.capture_channels )
         audio_input.setrate(self.sample_rate )
