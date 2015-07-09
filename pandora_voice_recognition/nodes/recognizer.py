@@ -50,6 +50,7 @@ class recognizer(object):
 		self.config.set_string('-dict', os.path.join(self.modeldir, 'lm/wsj/wlist5o.dic'))
 		self.config.set_string('-kws', self.keyphrase_dir)
 		self.config.set_string('-logfn', '/dev/null') 
+		self.config.set_string('-samprate', '8000.0')
 
 
 		#self.inp.setchannels(1)
