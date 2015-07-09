@@ -57,6 +57,34 @@
 
 using namespace message_filters;
 typedef state_manager_msgs::RobotModeMsg state;
+
+class SoundSync : public state_manager::StateClient
+{
+  ros::Subscriber sub_recognizer_;
+  ros::Subscriber sub_localizer_;
+  message_filters::Subscriber<pandora_audio_msgs::Recognition> *reco_sub_;
+  message_filters::Subscriber<pandora_common_msgs::GeneralAlertVector> *loc_sub_;
+  TimeSynchronizer<pandora_audio_msgs::Recognition, pandora_common_msgs::GeneralAlertVector> *sync_;
+  ros::Subscriber sub_localizer_standalone_;
+  ros::Publisher pub_;
+  ros::NodeHandle n_;
+  float yaw_;
+  float probability_;
+  std::string recognized_word_;
+  int currentState_;
+  bool syncOn_;
+  bool standaloneOn_;
+protected:
+  void startTransition(int newState);
+  void completeTransition();
+public:
+  SoundSync();
+  explicit SoundSync(const ros::NodeHandle& nodeHandle);
+  void sendAlert(float yaw, float probability, std::string recognized_word);
+  void callbackStandalone(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg);
+  void syncCallback(const pandora_audio_msgs::RecognitionConstPtr& reco, const pandora_common_msgs::GeneralAlertVectorConstPtr& loc);
+};
+
 #endif  // PANDORA_AUDIO_ALERT_GENERATOR_H
 
 

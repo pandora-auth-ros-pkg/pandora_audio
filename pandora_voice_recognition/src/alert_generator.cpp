@@ -36,76 +36,90 @@
  *   Taras Nikos <driverbulba@gmail.com>
  *********************************************************************/
 
- #include "pandora_voice_recognition/alert_generator.h"
-
-class SoundSync : public state_manager::StateClient
-{
-  ros::Subscriber sub_recognizer_;
-  ros::Subscriber sub_localizer_;
-  message_filters::Subscriber<pandora_audio_msgs::Recognition> *reco_sub_;
-  message_filters::Subscriber<pandora_common_msgs::GeneralAlertVector> *loc_sub_;
-  TimeSynchronizer<pandora_audio_msgs::Recognition, pandora_common_msgs::GeneralAlertVector> *sync_;
-  ros::Subscriber sub_localizer_standalone_;
-  ros::Publisher pub_;
-  ros::NodeHandle n_;
-  float yaw_;
-  float probability_;
-  std::string recognized_word_;
-  bool completedTransition_;
-  int currentState_;
-protected:
-  void startTransition(int newState);
-  void completeTransition();
-public:
-  SoundSync();
-  explicit SoundSync(ros::NodeHandle nodeHandle);
-  void sendAlert(float yaw, float probability, std::string recognized_word);
-  void callbackStandalone(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg);
-  void syncCallback(const pandora_audio_msgs::RecognitionConstPtr& reco, const pandora_common_msgs::GeneralAlertVectorConstPtr& loc);
-};
+#include "pandora_voice_recognition/alert_generator.h"
 
 void SoundSync::startTransition(int newState)
 {
-  if (newState == state::MODE_EXPLORATION_RESCUE)
-  {
-    ROS_INFO("EXPLORATION STATE");
-  }
-  completedTransition_ = false;
   currentState_ = newState;
+
+  switch (currentState_)
+  {
+    case state::MODE_SENSOR_HOLD:
+    case state::MODE_SENSOR_TEST:
+      if (!standaloneOn_)
+      {
+        sub_localizer_standalone_ = n_.subscribe("/sound/localization", 50, &SoundSync::callbackStandalone,this);
+        standaloneOn_ = true;
+      }
+      if (!syncOn_)
+      {
+        reco_sub_->subscribe();
+        loc_sub_->subscribe();
+        sync_->init();
+        syncOn_ = true;
+      }
+      break;
+    case state::MODE_EXPLORATION_RESCUE:
+    case state::MODE_IDENTIFICATION:
+      if (standaloneOn_)
+      {
+          sub_localizer_standalone_.shutdown();
+          standaloneOn_ = false;
+      }
+      if (!syncOn_)
+      {
+        reco_sub_->subscribe();
+        loc_sub_->subscribe();
+        sync_->init();
+        syncOn_ = true;
+      }
+      break;
+    case state::MODE_TERMINATING:
+      ROS_INFO("[/PANDORA_AUDIO/ALERT_GENERATOR] Terminating");
+      delete reco_sub_;
+      delete loc_sub_;
+      delete sync_;
+      ros::shutdown();
+      break;
+    default:
+      sub_localizer_standalone_.shutdown();
+      standaloneOn_ = false;
+      reco_sub_->unsubscribe();
+      loc_sub_->unsubscribe();
+      syncOn_ = false;
+  }
+
+  transitionComplete(currentState_);
 }
 
 void SoundSync::completeTransition()
 {
-  completedTransition_ = true;
+  ROS_INFO("[/PANDORA_AUDIO/ALERT_GENERATOR] Transitioned to state %s", ROBOT_STATES(currentState_).c_str());
 }
 
 SoundSync::SoundSync(
-    ros::NodeHandle nodeHandle):n_(nodeHandle)
+    const ros::NodeHandle& nodeHandle):n_(nodeHandle)
 {
-  completedTransition_ = false;
-  currentState_ = 0;
+  currentState_ = state::MODE_OFF;
   reco_sub_ = new message_filters::Subscriber<pandora_audio_msgs::Recognition>(n_,"/recognizer/output",1);
   loc_sub_ = new message_filters::Subscriber<pandora_common_msgs::GeneralAlertVector>(n_,"/sound/localization",1);
   sync_ = new TimeSynchronizer<pandora_audio_msgs::Recognition, pandora_common_msgs::GeneralAlertVector>(*reco_sub_,*loc_sub_,10);
   sync_->registerCallback(boost::bind(&SoundSync::syncCallback,this, _1, _2));
   sub_localizer_standalone_ = n_.subscribe("/sound/localization", 50, &SoundSync::callbackStandalone,this);
   pub_ = n_.advertise<pandora_audio_msgs::SoundAlertVector>("/sound/complete_alert", 50);
-
+  standaloneOn_ = true;
+  syncOn_ = true;
 }
 
 void SoundSync::syncCallback(const pandora_audio_msgs::RecognitionConstPtr& reco, const pandora_common_msgs::GeneralAlertVectorConstPtr& loc)
 {
-  if ((currentState_== state::MODE_EXPLORATION_RESCUE || currentState_ == state::MODE_SENSOR_TEST) && completedTransition_)
-  {
-    float yaw, probability;
-    std::string recognized_word;
-    recognized_word = reco->word;
-    yaw = loc->alerts[0].yaw;
-    probability = loc->alerts[0].probability;
-    sendAlert(yaw,probability,recognized_word);
-  }
-  else 
-    ROS_WARN("ALERT FOUND BUT NOT IN EXPLORATION");
+
+  float yaw, probability;
+  std::string recognized_word;
+  recognized_word = reco->word;
+  yaw = loc->alerts[0].yaw;
+  probability = loc->alerts[0].probability;
+  sendAlert(yaw,probability,recognized_word);
 }
 
 
@@ -133,12 +147,9 @@ void SoundSync::sendAlert(float yaw, float probability, std::string recognized_w
 void SoundSync::callbackStandalone(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg)
 {
   float yaw,probability;
-	if ((currentState_== state::MODE_SENSOR_HOLD || currentState_ == state::MODE_SENSOR_TEST) && completedTransition_)
-  {
-	  yaw = msg->alerts[0].yaw;
-	  probability = msg->alerts[0].probability;
-    sendAlert(yaw,probability,"0");  //Send alert with empty string inside.
-  }
+	yaw = msg->alerts[0].yaw;
+	probability = msg->alerts[0].probability;
+  sendAlert(yaw,probability,"0");  //Send alert with empty string inside.
 }
 
 
