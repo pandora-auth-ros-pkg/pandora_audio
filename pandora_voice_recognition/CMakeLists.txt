@@ -26,6 +26,8 @@ catkin_package(CATKIN_DEPENDS
 
 catkin_python_setup()
 
+roslint_cpp()
+
 #install(DIRECTORY demo
 #    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
