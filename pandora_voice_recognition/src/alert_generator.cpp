@@ -38,7 +38,6 @@
 
 #include <string>
 #include <boost/algorithm/string.hpp>
-
 #include "pandora_voice_recognition/alert_generator.h"
 
 void SoundSync::startTransition(int newState)
@@ -118,8 +117,8 @@ SoundSync::SoundSync(const ros::NodeHandle& nodeHandle) :
 
   reco_sub_ = new message_filters::Subscriber<pandora_audio_msgs::Recognition>(n_, "/recognizer/output", 1);
   loc_sub_ = new message_filters::Subscriber<pandora_common_msgs::GeneralAlertVector>(n_, "/sound/localization", 1);
-  sync_ = new message_filters::TimeSynchronizer<pandora_audio_msgs::Recognition, pandora_common_msgs::GeneralAlertVector>(
-    *reco_sub_, *loc_sub_, 1);
+  sync_ = new message_filters::TimeSynchronizer
+    <pandora_audio_msgs::Recognition, pandora_common_msgs::GeneralAlertVector>(*reco_sub_, *loc_sub_, 1);
   sync_->registerCallback(boost::bind(&SoundSync::syncCallback, this, _1, _2));
   reco_sub_->unsubscribe();
   loc_sub_->unsubscribe();

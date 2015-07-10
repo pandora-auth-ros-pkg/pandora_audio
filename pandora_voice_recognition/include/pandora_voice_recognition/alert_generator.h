@@ -39,7 +39,7 @@
 #ifndef PANDORA_VOICE_RECOGNITION_ALERT_GENERATOR_H
 #define PANDORA_VOICE_RECOGNITION_ALERT_GENERATOR_H
 
-
+#include <string>
 #include "ros/ros.h"
 #include "std_msgs/Header.h"
 #include "std_msgs/Int16.h"
