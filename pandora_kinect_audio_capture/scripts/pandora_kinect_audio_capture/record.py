@@ -52,7 +52,8 @@ class KinectAudioRecord():
 
         self.wav = self.get_wav_output(rospy.get_param("wav_file_location"))
 
-        rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback)
+        rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData,
+                self.callback, queue_size=1)
         rospy.spin()
 
     def get_wav_output(self, wav_file):

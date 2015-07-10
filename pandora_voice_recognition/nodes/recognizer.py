@@ -18,15 +18,14 @@ class recognizer(object):
 		# Start node
 		rospy.init_node("recognizer")
 
-
-
 		self.modeldir = "/usr/share/pocketsphinx/model"
 
 		#YAMLs
 		self.keyphrase_dir = rospy.get_param("~keyphrase_dir")  #full path and filename
 
 		self.pub = rospy.Publisher('/recognizer/output',Recognition)
-		rospy.Subscriber('/pandora_audio/kinect_audio_capture_stream', AudioData, self.callback, queue_size=1)
+		rospy.Subscriber('/pandora_audio/kinect_audio_capture_stream', AudioData,
+		                 self.callback, queue_size=1)
 
 		self.recognizer_channels = 1
 
@@ -64,7 +63,7 @@ class recognizer(object):
 		self.decoder.process_raw(buf, False, False)
 		if self.decoder.hyp() != None:
 			msg = Recognition()
-			msg.header.stamp = data.header.stamp
+			msg.header = data.header
 			msg.word = self.decoder.hyp().hypstr
 			self.pub.publish(msg)
 			#rospy.loginfo("Detected victim word: ", self.decoder.hyp().hypstr)

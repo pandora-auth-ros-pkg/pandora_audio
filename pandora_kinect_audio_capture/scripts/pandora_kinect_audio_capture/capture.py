@@ -53,11 +53,13 @@ class KinectAudioCapture():
         self.buffer_size = rospy.get_param("buffer_size")
         self.record_buffers = rospy.get_param("record_buffers")
 
-        pub = rospy.Publisher(rospy.get_param("published_topic_names/audio_stream"), AudioData, queue_size=1)
+        pub = rospy.Publisher(rospy.get_param("published_topic_names/audio_stream"),
+                              AudioData, queue_size=1)
         inp = self.get_audio_input()
         while not rospy.is_shutdown():
             wb = self.get_raw_data(inp)
 	    header = std_msgs.msg.Header()
+	    header.frame_id = "/kinect_frame"
             header.stamp = rospy.Time.now()
             pub.publish(header,wb[2], wb[3], wb[1], wb[0])  #appropriate channel to mic mapping
 

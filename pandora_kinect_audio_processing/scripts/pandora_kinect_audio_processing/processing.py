@@ -54,18 +54,22 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
         self.threshold = rospy.get_param("noise_threshold_db")
         self.source_loc_buffer = []
 
-        self.pub = rospy.Publisher(rospy.get_param("published_topic_names/sound_source_localisation"), GeneralAlertVector,
-                                   queue_size=10)
+        self.pub = rospy.Publisher(rospy.get_param("published_topic_names/sound_source_localisation"),
+                                   GeneralAlertVector, queue_size=1)
 
-        self.sub = rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback,
-                                    queue_size=1)
+        self.sub = rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"),
+                                    AudioData, self.callback, queue_size=1)
 
     def rms(self, window_data):
         return math.sqrt((window_data ** 2).sum() / float(len(window_data)))
 
     def calculate_horizontal_angle(self, rms_c1, rms_c2, rms_c3, rms_c4):
-        if not (abs(rms_c1-rms_c2)>self.threshold or abs(rms_c1-rms_c3)>self.threshold or abs(rms_c1-rms_c4)>self.threshold or abs(rms_c2-rms_c3)>self.threshold or abs(rms_c3-rms_c4)>self.threshold):
-        	return 999
+        if not (abs(rms_c1-rms_c2)>self.threshold or
+                abs(rms_c1-rms_c3)>self.threshold or
+                abs(rms_c1-rms_c4)>self.threshold or
+                abs(rms_c2-rms_c3)>self.threshold or
+                abs(rms_c3-rms_c4)>self.threshold):
+            return 999
        ##### These are needed to find the appropriate noise_threshold
        #print(abs(rms_c1-rms_c2))
 	   #print(abs(rms_c1-rms_c3))
@@ -74,7 +78,6 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 	   #print(abs(rms_c2-rms_c4))
 	   #print(abs(rms_c3-rms_c4))
 
-	
         dif13 = rms_c1 - rms_c3
         dif24 = rms_c2 - rms_c4
 
@@ -112,13 +115,13 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
         rms_c2 = self.rms(np.array(data.channel2))
         rms_c3 = self.rms(np.array(data.channel3))
         rms_c4 = self.rms(np.array(data.channel4))
-        
+
         # Mic calibration
         a_1=1
         a_2=1.0162
         a_3=1.0547
         a_4=1.0689
-        
+
         rms_c1 = a_1*rms_c1
         rms_c2 = a_2*rms_c2
         rms_c3 = a_3*rms_c3
@@ -130,9 +133,8 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
         angle, probability = self.analyse_buffered_data(self.source_loc_buffer)
 
         a = GeneralAlertVector()
-        a.header = std_msgs.msg.Header()
-        a.header.stamp = data.header.stamp  # localization alert should have the same timestamp
-        a.alerts.append(GeneralAlertInfo(angle,0,probability))
+        a.header = data.header  # localization alert should have the same timestamp
+        a.alerts.append(GeneralAlertInfo(angle, 0, probability))
         if angle < 800:
             # rospy.loginfo("Angle: [%f] Probability: [%f]",angle,probability)
             self.pub.publish(a)

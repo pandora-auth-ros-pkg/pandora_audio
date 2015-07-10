@@ -51,7 +51,8 @@ void SoundSync::startTransition(int newState)
     case state::MODE_SENSOR_TEST:
       if (!standaloneOn_)
       {
-        sub_localizer_standalone_ = n_.subscribe("/sound/localization", 50, &SoundSync::callbackStandalone, this);
+        sub_localizer_standalone_ = n_.subscribe("/sound/localization", 1,
+            &SoundSync::callbackStandalone, this);
         standaloneOn_ = true;
         ROS_INFO("[%s] Localization is on!", nodeName_.c_str());
       }
@@ -118,7 +119,7 @@ SoundSync::SoundSync(const ros::NodeHandle& nodeHandle) :
   reco_sub_ = new message_filters::Subscriber<pandora_audio_msgs::Recognition>(n_, "/recognizer/output", 1);
   loc_sub_ = new message_filters::Subscriber<pandora_common_msgs::GeneralAlertVector>(n_, "/sound/localization", 1);
   sync_ = new message_filters::TimeSynchronizer<pandora_audio_msgs::Recognition, pandora_common_msgs::GeneralAlertVector>(
-    *reco_sub_, *loc_sub_, 10);
+    *reco_sub_, *loc_sub_, 1);
   sync_->registerCallback(boost::bind(&SoundSync::syncCallback, this, _1, _2));
   reco_sub_->unsubscribe();
   loc_sub_->unsubscribe();
@@ -162,7 +163,6 @@ void SoundSync::sendAlert(float yaw, float probability,
   msg.alerts.push_back(alert);
 
   msg.header = header;
-  msg.header.frame_id = "/kinect_frame";
 
   pub_.publish(msg);
 }

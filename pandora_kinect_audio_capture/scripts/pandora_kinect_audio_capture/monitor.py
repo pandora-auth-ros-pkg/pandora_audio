@@ -62,7 +62,8 @@ class KinectAudioMonitor():
         self.pcm.setrate(16000)
         self.pcm.setperiodsize(self.buffer_size)
 
-        rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback)
+        rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"),
+                AudioData, self.callback, queue_size=1)
         rospy.spin()
 
     def callback(self, data):
