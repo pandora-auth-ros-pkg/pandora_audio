@@ -54,8 +54,6 @@
 #include <message_filters/time_synchronizer.h>
 
 
-
-
 typedef state_manager_msgs::RobotModeMsg state;
 
 class SoundSync : public state_manager::StateClient
@@ -68,6 +66,7 @@ class SoundSync : public state_manager::StateClient
   ros::Subscriber sub_localizer_standalone_;
   ros::Publisher pub_;
   ros::NodeHandle n_;
+  std::string nodeName_;
   float yaw_;
   float probability_;
   std::string recognized_word_;
@@ -76,7 +75,6 @@ class SoundSync : public state_manager::StateClient
   bool standaloneOn_;
 protected:
   void startTransition(int newState);
-  void completeTransition();
 public:
   SoundSync();
   explicit SoundSync(const ros::NodeHandle& nodeHandle);
@@ -87,5 +85,3 @@ public:
 };
 
 #endif  // PANDORA_VOICE_RECOGNITION_ALERT_GENERATOR_H
-
-

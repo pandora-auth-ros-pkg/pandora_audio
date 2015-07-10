@@ -36,9 +36,10 @@
  *   Taras Nikos <driverbulba@gmail.com>
  *********************************************************************/
 
-#include "pandora_voice_recognition/alert_generator.h"
-
 #include <string>
+#include <boost/algorithm/string.hpp>
+
+#include "pandora_voice_recognition/alert_generator.h"
 
 void SoundSync::startTransition(int newState)
 {
@@ -52,6 +53,7 @@ void SoundSync::startTransition(int newState)
       {
         sub_localizer_standalone_ = n_.subscribe("/sound/localization", 50, &SoundSync::callbackStandalone, this);
         standaloneOn_ = true;
+        ROS_INFO("[%s] Localization is on!", nodeName_.c_str());
       }
       if (!syncOn_)
       {
@@ -59,14 +61,16 @@ void SoundSync::startTransition(int newState)
         loc_sub_->subscribe();
         sync_->init();
         syncOn_ = true;
+        ROS_INFO("[%s] Localized recognition is on!", nodeName_.c_str());
       }
       break;
     case state::MODE_EXPLORATION_RESCUE:
     case state::MODE_IDENTIFICATION:
       if (standaloneOn_)
       {
-          sub_localizer_standalone_.shutdown();
-          standaloneOn_ = false;
+        sub_localizer_standalone_.shutdown();
+        standaloneOn_ = false;
+        ROS_INFO("[%s] Localization is off...", nodeName_.c_str());
       }
       if (!syncOn_)
       {
@@ -74,10 +78,11 @@ void SoundSync::startTransition(int newState)
         loc_sub_->subscribe();
         sync_->init();
         syncOn_ = true;
+        ROS_INFO("[%s] Localized recognition is on!", nodeName_.c_str());
       }
       break;
     case state::MODE_TERMINATING:
-      ROS_INFO("[/PANDORA_AUDIO/ALERT_GENERATOR] Terminating");
+      ROS_INFO("[%s] Terminating", nodeName_.c_str());
       delete reco_sub_;
       delete loc_sub_;
       delete sync_;
@@ -89,29 +94,39 @@ void SoundSync::startTransition(int newState)
       reco_sub_->unsubscribe();
       loc_sub_->unsubscribe();
       syncOn_ = false;
+      ROS_INFO("[%s] Localization is off...", nodeName_.c_str());
+      ROS_INFO("[%s] Localized recognition is off...", nodeName_.c_str());
+      break;
   }
 
   transitionComplete(currentState_);
 }
 
-void SoundSync::completeTransition()
+SoundSync::SoundSync(const ros::NodeHandle& nodeHandle) :
+  StateClient(true), n_(nodeHandle)
 {
-  ROS_INFO("[/PANDORA_AUDIO/ALERT_GENERATOR] Transitioned to state %s", ROBOT_STATES(currentState_).c_str());
-}
+  nodeName_ = boost::to_upper_copy<std::string>(n_.getNamespace());
 
-SoundSync::SoundSync(
-    const ros::NodeHandle& nodeHandle):n_(nodeHandle)
-{
   currentState_ = state::MODE_OFF;
+
   reco_sub_ = new message_filters::Subscriber<pandora_audio_msgs::Recognition>(n_, "/recognizer/output", 1);
   loc_sub_ = new message_filters::Subscriber<pandora_common_msgs::GeneralAlertVector>(n_, "/sound/localization", 1);
   sync_ = new message_filters::TimeSynchronizer<pandora_audio_msgs::Recognition, pandora_common_msgs::GeneralAlertVector>(
     *reco_sub_, *loc_sub_, 10);
   sync_->registerCallback(boost::bind(&SoundSync::syncCallback, this, _1, _2));
-  sub_localizer_standalone_ = n_.subscribe("/sound/localization", 50, &SoundSync::callbackStandalone, this);
+  reco_sub_->unsubscribe();
+  loc_sub_->unsubscribe();
+
+  // sub_localizer_standalone_ = n_.subscribe("/sound/localization", 50, &SoundSync::callbackStandalone, this);
+
   pub_ = n_.advertise<pandora_audio_msgs::SoundAlertVector>("/sound/complete_alert", 50);
-  standaloneOn_ = true;
-  syncOn_ = true;
+
+  standaloneOn_ = false;
+  syncOn_ = false;
+
+  ROS_INFO("[%s] Initialized", nodeName_.c_str());
+
+  clientInitialize();
 }
 
 void SoundSync::syncCallback(
@@ -124,8 +139,6 @@ void SoundSync::syncCallback(
   probability = loc->alerts[0].probability + (1-loc->alerts[0].probability)*0.8;
   sendAlert(yaw, probability, recognized_word);
 }
-
-
 
 void SoundSync::sendAlert(float yaw, float probability, std::string recognized_word)
 {
@@ -145,8 +158,6 @@ void SoundSync::sendAlert(float yaw, float probability, std::string recognized_w
   pub_.publish(msg);
 }
 
-
-
 void SoundSync::callbackStandalone(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg)
 {
   float yaw, probability;
@@ -155,11 +166,10 @@ void SoundSync::callbackStandalone(const pandora_common_msgs::GeneralAlertVector
   sendAlert(yaw, probability, "0");  // Send alert with empty string inside.
 }
 
-
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "alert_generator");
-  ros::NodeHandle nodeHandle;
+  ros::NodeHandle nodeHandle("");
   SoundSync synchronizer(nodeHandle);
 
   ros::spin();
