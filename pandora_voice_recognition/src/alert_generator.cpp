@@ -102,6 +102,12 @@ void SoundSync::startTransition(int newState)
   transitionComplete(currentState_);
 }
 
+void
+SoundSync::
+completeTransition()
+{
+}
+
 SoundSync::SoundSync(const ros::NodeHandle& nodeHandle) :
   StateClient(true), n_(nodeHandle)
 {
@@ -132,19 +138,18 @@ SoundSync::SoundSync(const ros::NodeHandle& nodeHandle) :
 void SoundSync::syncCallback(
   const pandora_audio_msgs::RecognitionConstPtr& reco, const pandora_common_msgs::GeneralAlertVectorConstPtr& loc)
 {
+  ROS_INFO("[%s] Sync callback", nodeName_.c_str());
   float yaw, probability;
   std::string recognized_word;
   recognized_word = reco->word;
   yaw = loc->alerts[0].yaw;
   probability = loc->alerts[0].probability + (1-loc->alerts[0].probability)*0.8;
-  sendAlert(yaw, probability, recognized_word);
+  sendAlert(yaw, probability, recognized_word, loc->header);
 }
 
-void SoundSync::sendAlert(float yaw, float probability, std::string recognized_word)
+void SoundSync::sendAlert(float yaw, float probability,
+    const std::string& recognized_word, const std_msgs::Header& header)
 {
-  // pandora_common_msgs::GeneralAlertVector msg;
-  // pandora_common_msgs::GeneralAlertInfo info;
-
   pandora_audio_msgs::SoundAlertVector msg;
   pandora_audio_msgs::SoundAlert alert;
 
@@ -155,15 +160,20 @@ void SoundSync::sendAlert(float yaw, float probability, std::string recognized_w
   alert.word = recognized_word;
 
   msg.alerts.push_back(alert);
+
+  msg.header = header;
+  msg.header.frame_id = "/kinect_frame";
+
   pub_.publish(msg);
 }
 
 void SoundSync::callbackStandalone(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg)
 {
+  ROS_INFO("[%s] standalone callback", nodeName_.c_str());
   float yaw, probability;
   yaw = msg->alerts[0].yaw;
   probability = msg->alerts[0].probability;
-  sendAlert(yaw, probability, "0");  // Send alert with empty string inside.
+  sendAlert(yaw, probability, "0", msg->header);  // Send alert with empty string inside.
 }
 
 int main(int argc, char **argv)

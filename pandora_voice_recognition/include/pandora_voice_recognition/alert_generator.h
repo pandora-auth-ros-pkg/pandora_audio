@@ -41,6 +41,7 @@
 
 
 #include "ros/ros.h"
+#include "std_msgs/Header.h"
 #include "std_msgs/Int16.h"
 #include "std_msgs/String.h"
 #include "state_manager/state_client.h"
@@ -75,10 +76,12 @@ class SoundSync : public state_manager::StateClient
   bool standaloneOn_;
 protected:
   void startTransition(int newState);
+  void completeTransition();
 public:
   SoundSync();
   explicit SoundSync(const ros::NodeHandle& nodeHandle);
-  void sendAlert(float yaw, float probability, std::string recognized_word);
+  void sendAlert(float yaw, float probability,
+      const std::string& recognized_word, const std_msgs::Header& header);
   void callbackStandalone(const pandora_common_msgs::GeneralAlertVector::ConstPtr& msg);
   void syncCallback(
     const pandora_audio_msgs::RecognitionConstPtr& reco, const pandora_common_msgs::GeneralAlertVectorConstPtr& loc);
