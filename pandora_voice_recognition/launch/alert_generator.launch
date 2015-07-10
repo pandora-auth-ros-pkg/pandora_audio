@@ -4,6 +4,6 @@
     name="alert_generator"
     pkg="pandora_voice_recognition"
     type="alert_generator"
-    output="screen"
-    ns = "pandora_audio"/>
+    output="screen" />
+
 </launch>

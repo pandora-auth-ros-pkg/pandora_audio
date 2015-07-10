@@ -19,9 +19,9 @@ class recognizer(object):
 		rospy.init_node("recognizer")
 
 
-		
+
 		self.modeldir = "/usr/share/pocketsphinx/model"
-		
+
 		#YAMLs
 		self.keyphrase_dir = rospy.get_param("~keyphrase_dir")  #full path and filename
 
@@ -42,7 +42,7 @@ class recognizer(object):
 		self.config.set_string('-logfn', '/dev/null')    # Disable spamming
 
 		self.decoder = Decoder(self.config)
-		
+
 		self.decoder.start_utt()
 		rospy.spin()
 
