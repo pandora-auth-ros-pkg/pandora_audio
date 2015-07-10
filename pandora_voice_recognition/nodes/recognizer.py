@@ -31,7 +31,7 @@ class recognizer(object):
 		self.recognizer_channels = 1
 
 		##configure
-		self.gain = 5
+		self.gain = 2
 		###
 
 		self.config = Decoder.default_config()
@@ -54,8 +54,8 @@ class recognizer(object):
 		c3 = np.array(data.channel3)
 		c4 = np.array(data.channel4)
 		for k in range(0, len(c1)):
-			temp = self.gain*(c1[k]+c2[k]+c3[k]+c4[k])/4 # capture sound from 4 mics
-			#temp = self.gain*c2[k]  # capture sound from front mic
+			#temp = self.gain*(c1[k]+c2[k]+c3[k]+c4[k])/4 # capture sound from 4 mics
+			temp = self.gain*c2[k]  # capture sound from front mic
 			c.append(temp)
 			c.append(temp)
 
