@@ -30,55 +30,36 @@ class recognizer(object):
 
 		self.recognizer_channels = 1
 
-		#prosoxh! Afta einai gia monitor
-		#self.pcm = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK)
-		#self.pcm.setchannels(1)
-		#self.pcm.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-		#self.pcm.setrate(16000)
-		#self.pcm.setperiodsize(1024)
-		#########
-
 		##configure
-		self.gain = 1
+		self.gain = 5
 		###
 
-		#self.inp = alsaaudio.PCM(alsaaudio.PCM_CAPTURE, alsaaudio.PCM_NORMAL, 'default')
-		
 		self.config = Decoder.default_config()
 
 		self.config.set_string('-hmm', os.path.join(self.modeldir, 'hmm/wsj1'))
 		self.config.set_string('-dict', os.path.join(self.modeldir, 'lm/wsj/wlist5o.dic'))
 		self.config.set_string('-kws', self.keyphrase_dir)
-		self.config.set_string('-logfn', '/dev/null') 
-		#self.config.set_string('-samprate', '8000.0')
-
-
-		#self.inp.setchannels(1)
-		#self.inp.setrate(16000)
-		#self.inp.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-		#self.inp.setperiodsize(1024)
+		self.config.set_string('-logfn', '/dev/null')    # Disable spamming
 
 		self.decoder = Decoder(self.config)
+		
 		self.decoder.start_utt()
 		rospy.spin()
 
 		# Process audio chunk by chunk. On keyword detected perform action and restart search
 	def callback(self,data):
-		#length, buf = self.inp.read()  #length is not used
 		c = []
 		c1 = np.array(data.channel1)
 		c2 = np.array(data.channel2)
 		c3 = np.array(data.channel3)
 		c4 = np.array(data.channel4)
 		for k in range(0, len(c1)):
-			#temp = self.gain*(c1[k]+c2[k]+c3[k]+c4[k])/4
-			temp = self.gain*c2[k]
+			temp = self.gain*(c1[k]+c2[k]+c3[k]+c4[k])/4 # capture sound from 4 mics
+			#temp = self.gain*c2[k]  # capture sound from front mic
 			c.append(temp)
 			c.append(temp)
 
 		buf = struct.pack("<" + str(4096) + 'h', *c)
-
-		#self.pcm.write(buf)
 
 		self.decoder.process_raw(buf, False, False)
 		if self.decoder.hyp() != None:

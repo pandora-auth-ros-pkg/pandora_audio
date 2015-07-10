@@ -38,8 +38,6 @@ import rospy
 from pandora_audio_msgs.msg import AudioData
 from pandora_common_msgs.msg import GeneralAlertVector
 from pandora_common_msgs.msg import GeneralAlertInfo
-from state_manager_msgs.msg import RobotModeMsg
-import std_msgs.msg
 import math
 import numpy as np
 import state_manager
@@ -49,61 +47,31 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 
     def __init__(self):
 
-        
-        #state_manager.state_client.StateClient.__init__(self)
-
         self.window_size = rospy.get_param("window_size")
-        self.noise_floor_buffer_length = rospy.get_param("noise_floor_buffer_length") # 64 windows (~8 seconds)
         self.source_loc_buffer_length = rospy.get_param("source_loc_buffer_length") # 16 windows (~2 second)
         self.similarity_distance = rospy.get_param("similarity_distance")  # similarity distance in degrees (~30 degrees)
-        self.noise_floor_sensitivity = rospy.get_param("noise_floor_sensitivity") #noise floor threshold. Range 0-3. 3 is very strict.
-        self.source_loc_buffer = []
-        self.noise_floor_buffer = []
         self.threshold = rospy.get_param("noise_threshold_db")
-        self.robot_state = RobotModeMsg.MODE_OFF
+        self.source_loc_buffer = []
 
         self.pub = rospy.Publisher(rospy.get_param("published_topic_names/sound_source_localisation"), GeneralAlertVector,
                                    queue_size=10)
 
         self.sub = rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback,
                                     queue_size=1)
-        #self.sub.unregister()
-
-        #self.client_initialize()
-
-    def start_transition(self, state):
-        rospy.loginfo("[%s] Starting Transition to state %i", self._name, state)
-        self.robot_state = state
-        self.transition_complete(state)
-
-    def complete_transition(self):
-       
-        rospy.loginfo("[%s] System Transitioned, starting work", self._name)
-        rospy.loginfo("Ela mbitch1"+RobotModeMsg.MODE_SENSOR_HOLD+"  klain "+self.robot_state)
-        if self.robot_state == RobotModeMsg.MODE_SENSOR_HOLD or self.robot_state == RobotModeMsg.MODE_SENSOR_TEST:
-	    rospy.loginfo("Ela mbitch2")
-            self.sub.__init__(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback,
-                              queue_size=1)
-        else:
-            self.sub.unregister()
 
     def rms(self, window_data):
         return math.sqrt((window_data ** 2).sum() / float(len(window_data)))
 
     def calculate_horizontal_angle(self, rms_c1, rms_c2, rms_c3, rms_c4):
-        # mean of rms plus noise_floor_sensitivity multiplied by the standard deviation
-        # if rms_c1 < (np.mean(self.noise_floor_buffer)+self.noise_floor_sensitivity*np.std(self.noise_floor_buffer)):  #changed from np.median to np.mean
-        #    return 999
-	
-	if not (abs(rms_c1-rms_c2)>self.threshold or abs(rms_c1-rms_c3)>self.threshold or abs(rms_c1-rms_c4)>self.threshold or abs(rms_c2-rms_c3)>self.threshold or abs(rms_c3-rms_c4)>self.threshold):
-        	return 999 
-
-	#print(abs(rms_c1-rms_c2))
-	#print(abs(rms_c1-rms_c3))
-	#print(abs(rms_c1-rms_c4))
-	#print(abs(rms_c2-rms_c3))
-	#print(abs(rms_c2-rms_c4))
-	#print(abs(rms_c3-rms_c4))
+        if not (abs(rms_c1-rms_c2)>self.threshold or abs(rms_c1-rms_c3)>self.threshold or abs(rms_c1-rms_c4)>self.threshold or abs(rms_c2-rms_c3)>self.threshold or abs(rms_c3-rms_c4)>self.threshold):
+        	return 999
+       ##### These are needed to find the appropriate noise_threshold
+       #print(abs(rms_c1-rms_c2))
+	   #print(abs(rms_c1-rms_c3))
+	   #print(abs(rms_c1-rms_c4))
+	   #print(abs(rms_c2-rms_c3))
+	   #print(abs(rms_c2-rms_c4))
+	   #print(abs(rms_c3-rms_c4))
 
 	
         dif13 = rms_c1 - rms_c3
@@ -139,24 +107,21 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
 
     def callback(self, data):
 
-	rms_c1 = self.rms(np.array(data.channel1))
+        rms_c1 = self.rms(np.array(data.channel1))
         rms_c2 = self.rms(np.array(data.channel2))
         rms_c3 = self.rms(np.array(data.channel3))
-        rms_c4 = self.rms(np.array(data.channel4)) 
-
-	a_1=1
-	a_2=1.0162
-	a_3=1.0547
-	a_4=1.0689
-
-	rms_c1 = a_1*rms_c1
+        rms_c4 = self.rms(np.array(data.channel4))
+        
+        # Mic calibration
+        a_1=1
+        a_2=1.0162
+        a_3=1.0547
+        a_4=1.0689
+        
+        rms_c1 = a_1*rms_c1
         rms_c2 = a_2*rms_c2
         rms_c3 = a_3*rms_c3
         rms_c4 = a_4*rms_c4
-        #self.noise_floor_buffer.append(rms_c1)
-        self.noise_floor_buffer.append((rms_c1+rms_c2+rms_c3+rms_c4)/4)
-        if len(self.noise_floor_buffer) > self.noise_floor_buffer_length:
-            self.noise_floor_buffer.pop(0)
 
         self.source_loc_buffer.append(self.calculate_horizontal_angle(rms_c1, rms_c2, rms_c3, rms_c4))
         if len(self.source_loc_buffer) > self.source_loc_buffer_length:
@@ -168,7 +133,7 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
         a.header.stamp = data.header.stamp  # localization alert should have the same timestamp
         a.alerts.append(GeneralAlertInfo(angle,0,probability))
         if angle < 800:
-            rospy.loginfo("Angle: [%f] Probability: [%f]",angle,probability)
+            # rospy.loginfo("Angle: [%f] Probability: [%f]",angle,probability)
             self.pub.publish(a)
 
 
