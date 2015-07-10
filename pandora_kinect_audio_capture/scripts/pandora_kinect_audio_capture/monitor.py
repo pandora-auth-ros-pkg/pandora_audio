@@ -49,6 +49,9 @@ class KinectAudioMonitor():
         self.monitor_channels = rospy.get_param("monitor_channels")
         self.buffer_size = rospy.get_param("buffer_size")
         self.record_buffers = rospy.get_param("record_buffers")
+        self.previous_temp = 0
+
+        self.first_callback = True
 
         self.pcm = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK)
         self.pcm.setchannels(self.monitor_channels)
@@ -56,7 +59,7 @@ class KinectAudioMonitor():
             self.pcm.setformat(alsaaudio.PCM_FORMAT_S16_LE)
         else:
             raise Exception("Not supported bit depth")
-        self.pcm.setrate(self.sample_rate)
+        self.pcm.setrate(16000)
         self.pcm.setperiodsize(self.buffer_size)
 
         rospy.Subscriber(rospy.get_param("subscribed_topic_names/audio_stream"), AudioData, self.callback)
@@ -68,11 +71,17 @@ class KinectAudioMonitor():
         c2 = np.array(data.channel2)
         c3 = np.array(data.channel3)
         c4 = np.array(data.channel4)
-        for k in range(0, len(c1)):
-            temp = (c1[k]+c2[k]+c3[k]+c4[k])/4
-            c.append(temp)
+        for k in range(1, len(c1)):
+            temp = (c1[k-1]+c2[k-1]+c3[k-1]+c4[k-1])/4
+            temp2 = (c1[k]+c2[k]+c3[k]+c4[k])/4
+            c.append(10*temp)
+            c.append(10*(temp/2 + temp2/2))
+        k = len(c1)-1
+        c.append((c1[k]+c2[k]+c3[k]+c4[k])/4)
+        c.append((c1[k]+c2[k]+c3[k]+c4[k])/4)
 
-        self.pcm.write(struct.pack("<" + str(self.monitor_channels * self.record_buffers * self.buffer_size) + 'h', *c))
+
+        self.pcm.write(struct.pack("<" + str(self.monitor_channels * self.record_buffers * self.buffer_size*2) + 'h', *c))
 
 
 if __name__ == '__main__':

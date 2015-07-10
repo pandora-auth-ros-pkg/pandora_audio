@@ -121,7 +121,7 @@ void SoundSync::syncCallback(
   std::string recognized_word;
   recognized_word = reco->word;
   yaw = loc->alerts[0].yaw;
-  probability = loc->alerts[0].probability;
+  probability = loc->alerts[0].probability + (1-loc->alerts[0].probability)*0.8;
   sendAlert(yaw, probability, recognized_word);
 }
 

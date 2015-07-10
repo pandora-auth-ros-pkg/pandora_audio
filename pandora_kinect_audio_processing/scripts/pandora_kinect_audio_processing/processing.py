@@ -32,6 +32,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # Author: Mylwnakis Lefteris
+# Author: Taras Nikos
 
 import rospy
 from pandora_audio_msgs.msg import AudioData
@@ -58,7 +59,7 @@ class KinectAudioProcessing(state_manager.state_client.StateClient):
         self.noise_floor_sensitivity = rospy.get_param("noise_floor_sensitivity") #noise floor threshold. Range 0-3. 3 is very strict.
         self.source_loc_buffer = []
         self.noise_floor_buffer = []
-        self.threshold = 70
+        self.threshold = rospy.get_param("noise_threshold_db")
         self.robot_state = RobotModeMsg.MODE_OFF
 
         self.pub = rospy.Publisher(rospy.get_param("published_topic_names/sound_source_localisation"), GeneralAlertVector,
