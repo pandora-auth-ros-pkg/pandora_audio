@@ -38,6 +38,7 @@ import rospy
 from pandora_audio_msgs.msg import AudioData
 from pandora_common_msgs.msg import GeneralAlertVector
 from pandora_common_msgs.msg import GeneralAlertInfo
+import std_msgs.msg
 import math
 import numpy as np
 import state_manager
