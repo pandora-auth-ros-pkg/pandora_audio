@@ -41,10 +41,9 @@ from pandora_common_msgs.msg import GeneralAlertInfo
 import std_msgs.msg
 import math
 import numpy as np
-import state_manager
 
 
-class KinectAudioProcessing(state_manager.state_client.StateClient):
+class KinectAudioProcessing():
 
     def __init__(self):
 
